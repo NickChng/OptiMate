@@ -58,12 +58,14 @@ namespace Optimate
         public bool CanLoadTemplates { get; set; } = true;
         public bool UseTest { get; set; } = true;
 
+       
         private SolidColorBrush ErrorColour = new SolidColorBrush(Colors.Orange);
 
         private SolidColorBrush WarningColour = new SolidColorBrush(Colors.Goldenrod);
         public SometimesObservableCollection<OptiMateProtocolOptiStructure> ProtocolStructures { get; set; } = new SometimesObservableCollection<OptiMateProtocolOptiStructure>();
 
-        public SometimesObservableCollection<string> Operators { get; set; } = new SometimesObservableCollection<string>() { "copy", "crop", "margin", "and", "or", "subfrom" };
+        public SometimesObservableCollection<OperatorType> Operators { get; set; } = new SometimesObservableCollection<OperatorType>() { OperatorType.copy, OperatorType.margin, OperatorType.or, OperatorType.and, OperatorType.crop, OperatorType.sub, OperatorType.subfrom};
+
         public ObservableCollection<string> EclipseIds { get; set; } = new ObservableCollection<string>();
         public SometimesObservableCollection<ProtocolPointer> Protocols { get; set; } = new SometimesObservableCollection<ProtocolPointer>();
 
@@ -125,6 +127,21 @@ namespace Optimate
             RaisePropertyChangedEvent(nameof(allInputsValid));
             RaisePropertyChangedEvent(nameof(StartButtonColor));
             RaisePropertyChangedEvent(nameof(StartButtonTooltip));
+            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.isTargetParameterValid));
+            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.isOperatorParameterValid));
+            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.operatorParameterColor));
+            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.isOperatorParameter2Valid));
+            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.operatorParameter2Color));
+            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.isOperatorParameter3Valid));
+            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.operatorParameter3Color));
+            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.isOperatorParameter4Valid));
+            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.operatorParameter4Color));
+            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.isOperatorParameter5Valid));
+            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.operatorParameter5Color));
+            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.isOperatorParameter6Valid));
+            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.operatorParameter6Color));
+            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.isOperatorParameter7Valid));
+            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.operatorParameter7Color));
         }
 
         public Visibility ProtocolVisibility

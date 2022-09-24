@@ -22,7 +22,7 @@ namespace Optimate {
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true)]
     [System.Xml.Serialization.XmlRootAttribute(Namespace="", IsNullable=false)]
-    public partial class OptiMateProtocol : ObservableObject, System.ComponentModel.INotifyPropertyChanged {
+    public partial class OptiMateProtocol {
         
         private byte versionField;
         
@@ -37,7 +37,6 @@ namespace Optimate {
             }
             set {
                 this.versionField = value;
-                this.RaisePropertyChanged("version");
             }
         }
         
@@ -49,7 +48,6 @@ namespace Optimate {
             }
             set {
                 this.optiStructuresField = value;
-                this.RaisePropertyChanged("OptiStructures");
             }
         }
         
@@ -61,16 +59,6 @@ namespace Optimate {
             }
             set {
                 this.protocolDisplayNameField = value;
-                this.RaisePropertyChanged("ProtocolDisplayName");
-            }
-        }
-        
-        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
-        
-        protected void RaisePropertyChanged(string propertyName) {
-            System.ComponentModel.PropertyChangedEventHandler propertyChanged = this.PropertyChanged;
-            if ((propertyChanged != null)) {
-                propertyChanged(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
             }
         }
     }
@@ -81,7 +69,7 @@ namespace Optimate {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true)]
-    public partial class OptiMateProtocolOptiStructure : ObservableObject, System.ComponentModel.INotifyPropertyChanged {
+    public partial class OptiMateProtocolOptiStructure : ObservableObject {
         
         private OptiMateProtocolOptiStructureInstruction[] instructionField;
         
@@ -109,7 +97,6 @@ namespace Optimate {
             }
             set {
                 this.instructionField = value;
-                this.RaisePropertyChanged("Instruction");
             }
         }
         
@@ -121,7 +108,6 @@ namespace Optimate {
             }
             set {
                 this.structureIdField = value;
-                this.RaisePropertyChanged("StructureId");
             }
         }
         
@@ -134,7 +120,6 @@ namespace Optimate {
             }
             set {
                 this.isHighResolutionField = value;
-                this.RaisePropertyChanged("isHighResolution");
             }
         }
         
@@ -146,7 +131,6 @@ namespace Optimate {
             }
             set {
                 this.isNewField = value;
-                this.RaisePropertyChanged("isNew");
             }
         }
         
@@ -158,7 +142,6 @@ namespace Optimate {
             }
             set {
                 this.isNewFieldSpecified = value;
-                this.RaisePropertyChanged("isNewSpecified");
             }
         }
         
@@ -170,7 +153,6 @@ namespace Optimate {
             }
             set {
                 this.typeField = value;
-                this.RaisePropertyChanged("Type");
             }
         }
         
@@ -182,16 +164,6 @@ namespace Optimate {
             }
             set {
                 this.baseStructureField = value;
-                this.RaisePropertyChanged("BaseStructure");
-            }
-        }
-        
-        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
-        
-        protected void RaisePropertyChanged(string propertyName) {
-            System.ComponentModel.PropertyChangedEventHandler propertyChanged = this.PropertyChanged;
-            if ((propertyChanged != null)) {
-                propertyChanged(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
             }
         }
     }
@@ -199,10 +171,10 @@ namespace Optimate {
     /// <remarks/>
     [System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.8.3928.0")]
     [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    //[System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true)]
-    public partial class OptiMateProtocolOptiStructureInstruction : ObservableObject, System.ComponentModel.INotifyPropertyChanged {
+    public partial class OptiMateProtocolOptiStructureInstruction : ObservableObject {
         
         private OperatorType operatorField;
         
@@ -238,7 +210,6 @@ namespace Optimate {
             }
             set {
                 this.operatorField = value;
-                this.RaisePropertyChanged("Operator");
             }
         }
         
@@ -250,7 +221,6 @@ namespace Optimate {
             }
             set {
                 this.operatorFieldSpecified = value;
-                this.RaisePropertyChanged("OperatorSpecified");
             }
         }
         
@@ -262,7 +232,6 @@ namespace Optimate {
             }
             set {
                 this.defaultTargetField = value;
-                this.RaisePropertyChanged("DefaultTarget");
             }
         }
         
@@ -274,7 +243,6 @@ namespace Optimate {
             }
             set {
                 this.targetField = value;
-                this.RaisePropertyChanged("Target");
             }
         }
         
@@ -286,7 +254,6 @@ namespace Optimate {
             }
             set {
                 this.operatorParameterField = value;
-                this.RaisePropertyChanged("OperatorParameter");
             }
         }
         
@@ -298,7 +265,6 @@ namespace Optimate {
             }
             set {
                 this.operatorParameter2Field = value;
-                this.RaisePropertyChanged("OperatorParameter2");
             }
         }
         
@@ -310,7 +276,6 @@ namespace Optimate {
             }
             set {
                 this.operatorParameter3Field = value;
-                this.RaisePropertyChanged("OperatorParameter3");
             }
         }
         
@@ -322,7 +287,6 @@ namespace Optimate {
             }
             set {
                 this.operatorParameter4Field = value;
-                this.RaisePropertyChanged("OperatorParameter4");
             }
         }
         
@@ -334,7 +298,6 @@ namespace Optimate {
             }
             set {
                 this.operatorParameter5Field = value;
-                this.RaisePropertyChanged("OperatorParameter5");
             }
         }
         
@@ -346,7 +309,6 @@ namespace Optimate {
             }
             set {
                 this.operatorParameter6Field = value;
-                this.RaisePropertyChanged("OperatorParameter6");
             }
         }
         
@@ -358,7 +320,6 @@ namespace Optimate {
             }
             set {
                 this.operatorParameter7Field = value;
-                this.RaisePropertyChanged("OperatorParameter7");
             }
         }
         
@@ -370,7 +331,6 @@ namespace Optimate {
             }
             set {
                 this.isNewField = value;
-                this.RaisePropertyChanged("isNew");
             }
         }
         
@@ -382,16 +342,6 @@ namespace Optimate {
             }
             set {
                 this.isNewFieldSpecified = value;
-                this.RaisePropertyChanged("isNewSpecified");
-            }
-        }
-        
-        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
-        
-        protected void RaisePropertyChanged(string propertyName) {
-            System.ComponentModel.PropertyChangedEventHandler propertyChanged = this.PropertyChanged;
-            if ((propertyChanged != null)) {
-                propertyChanged(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
             }
         }
     }
@@ -425,4 +375,5 @@ namespace Optimate {
         /// <remarks/>
         subfrom,
     }
+    
 }

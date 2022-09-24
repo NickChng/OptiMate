@@ -175,8 +175,8 @@ namespace Optimate.Converters
                 return Visibility.Collapsed;
             else
             {
-                string op = value as string;
-                if (op == "crop")
+                OperatorType op = (OperatorType)value;
+                if (op == OperatorType.crop)
                     return Visibility.Visible;
                 else
                     return Visibility.Collapsed;
@@ -197,8 +197,8 @@ namespace Optimate.Converters
                 return Visibility.Collapsed;
             else
             {
-                string op = value as string;
-                if (op == "margin")
+                OperatorType op = (OperatorType)value;
+                if (op == OperatorType.margin)
                     return Visibility.Visible;
                 else
                     return Visibility.Collapsed;
@@ -253,9 +253,7 @@ namespace Optimate.Converters
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
 
-            OperatorType Op = OperatorType.UNDEFINED;
-            if (Enum.TryParse(value as string, out Op))
-            {
+            OperatorType Op = (OperatorType)value;
             switch (Op)
                 {
                     case OperatorType.margin:
@@ -263,9 +261,9 @@ namespace Optimate.Converters
                     default:
                         return Visibility.Visible;
                 }
-            }
-            else
-                return Visibility.Visible;
+            //}
+            //else
+            //    return Visibility.Visible;
 
         }
         public object ConvertBack(object value, Type targetTypes,
@@ -300,7 +298,7 @@ namespace Optimate.Converters
         public object Convert(object[] value, Type targetType,
                object parameter, System.Globalization.CultureInfo culture)
         {
-            ObservableCollection<string> Operators = value[0] as ObservableCollection<string>;
+            ObservableCollection<OperatorType> Operators = value[0] as ObservableCollection<OperatorType>;
             var ProtocolStructure = value[1] as OptiMateProtocolOptiStructure;
             var thisInstruction = value[2] as OptiMateProtocolOptiStructureInstruction;
             if (ProtocolStructure.Instruction != null)
@@ -308,15 +306,15 @@ namespace Optimate.Converters
                 var index = ProtocolStructure.Instruction.ToList().IndexOf(thisInstruction);
                 if (index > 0)
                 {
-                    Operators.Remove(@"copy");
+                    Operators.Remove(OperatorType.copy);
                     return Operators;
                 }
                 else
-                    return new ObservableCollection<string>() { @"copy" };
+                    return new ObservableCollection<OperatorType>() { OperatorType.copy };
             }
             else
             {
-                return new ObservableCollection<string>(){ @"copy"};
+                return new ObservableCollection<OperatorType>(){ OperatorType.copy};
             }
         }
 

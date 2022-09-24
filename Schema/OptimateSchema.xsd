@@ -16,13 +16,13 @@
     <xs:complexType>
       <xs:sequence>
         <xs:element minOccurs="1" maxOccurs="1" name="version" type="xs:unsignedByte"/>
-        <xs:element minOccurs="1" maxOccurs="1" name="OptiStructures">
+        <xs:element name="OptiStructures">
           <xs:complexType>
-            <xs:complexContent mixed="false">
-              <xs:extension base="ObservableObject">
-                <xs:sequence>
-                  <xs:element minOccurs="0" maxOccurs="unbounded" name="OptiStructure" type="">
-                    <xs:complexType>
+            <xs:sequence>
+              <xs:element minOccurs="0" maxOccurs="unbounded" name="OptiStructure">
+                <xs:complexType>
+                  <xs:complexContent mixed="false">
+                    <xs:extension base="ObservableObject">
                       <xs:sequence>
                         <xs:element minOccurs="0" maxOccurs="unbounded" name="Instruction">
                           <xs:complexType>
@@ -49,11 +49,11 @@
                       <xs:attribute name="isNew" type="xs:boolean" use="optional" />
                       <xs:attribute name="Type" type="xs:string" use="required"/>
                       <xs:attribute name="BaseStructure" type="xs:string" use="required" />
-                    </xs:complexType>
-                  </xs:element>
-                </xs:sequence>
-              </xs:extension>
-            </xs:complexContent>
+                    </xs:extension>
+                  </xs:complexContent>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
           </xs:complexType>
         </xs:element>
       </xs:sequence>

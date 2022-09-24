@@ -8,7 +8,7 @@ using System.Windows.Media;
 
 namespace Optimate
 {
-    public partial class OptiMateProtocolOptiStructure : ObservableObject, System.ComponentModel.INotifyDataErrorInfo
+    public partial class OptiMateProtocolOptiStructure : ObservableObject
     {
         // properties for error checking
         public bool isBaseStructureValid
@@ -62,6 +62,20 @@ namespace Optimate
         {
             get
             {
+                ClearErrors(nameof(OperatorParameter));
+                switch (Operator)
+                {
+                    case OperatorType.margin:
+                        if (double.TryParse(OperatorParameter, out double marginValue))
+                            if (marginValue > 50 || marginValue < -20)
+                                AddError(nameof(OperatorParameter), @"Value out of range");
+                        break;
+                    case OperatorType.crop:
+                        if (double.TryParse(OperatorParameter, out double cropValue))
+                            if (cropValue > 50 || cropValue < 0)
+                                AddError(nameof(OperatorParameter), @"Value out of range");
+                        break;
+                }
                 return !HasError(nameof(OperatorParameter));
             }
         }
@@ -92,6 +106,15 @@ namespace Optimate
         {
             get
             {
+                ClearErrors(nameof(OperatorParameter2));
+                switch (Operator)
+                {
+                    case OperatorType.margin:
+                        if (double.TryParse(OperatorParameter2, out double marginValue))
+                            if (marginValue > 50 || marginValue < 0)
+                                AddError(nameof(OperatorParameter2), @"Value out of range");
+                        break;
+                }
                 return !HasError(nameof(OperatorParameter2));
             }
         }
@@ -122,6 +145,15 @@ namespace Optimate
         {
             get
             {
+                ClearErrors(nameof(OperatorParameter3));
+                switch (Operator)
+                {
+                    case OperatorType.margin:
+                        if (double.TryParse(OperatorParameter3, out double marginValue))
+                            if (marginValue > 50 || marginValue < 0)
+                                AddError(nameof(OperatorParameter3), @"Value out of range");
+                        break;
+                }
                 return !HasError(nameof(OperatorParameter3));
             }
         }
@@ -152,6 +184,15 @@ namespace Optimate
         {
             get
             {
+                ClearErrors(nameof(OperatorParameter4));
+                switch (Operator)
+                {
+                    case OperatorType.margin:
+                        if (double.TryParse(OperatorParameter4, out double marginValue))
+                            if (marginValue > 50 || marginValue < 0)
+                                AddError(nameof(OperatorParameter4), @"Value out of range");
+                        break;
+                }
                 return !HasError(nameof(OperatorParameter4));
             }
         }
@@ -181,6 +222,15 @@ namespace Optimate
         {
             get
             {
+                ClearErrors(nameof(OperatorParameter5));
+                switch (Operator)
+                {
+                    case OperatorType.margin:
+                        if (double.TryParse(OperatorParameter5, out double marginValue))
+                            if (marginValue > 50 || marginValue < 0)
+                                AddError(nameof(OperatorParameter5), @"Value out of range");
+                        break;
+                }
                 return !HasError(nameof(OperatorParameter5));
             }
         }
@@ -211,6 +261,15 @@ namespace Optimate
         {
             get
             {
+                ClearErrors(nameof(OperatorParameter6));
+                switch (Operator)
+                {
+                    case OperatorType.margin:
+                        if (double.TryParse(OperatorParameter6, out double marginValue))
+                            if (marginValue > 50 || marginValue < 0)
+                                AddError(nameof(OperatorParameter6), @"Value out of range");
+                        break;
+                }
                 return !HasError(nameof(OperatorParameter6));
             }
         }
@@ -240,6 +299,15 @@ namespace Optimate
         {
             get
             {
+                ClearErrors(nameof(OperatorParameter7));
+                switch (Operator)
+                {
+                    case OperatorType.margin:
+                        if (double.TryParse(OperatorParameter7, out double marginValue))
+                            if (marginValue > 50 || marginValue < 0)
+                                AddError(nameof(OperatorParameter7), @"Value out of range");
+                        break;
+                }
                 return !HasError(nameof(OperatorParameter7));
             }
         }
