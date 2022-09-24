@@ -77,10 +77,9 @@
   <ItemGroup>
     <Compile Include="Converters.cs" />
     <Compile Include="Enums.cs" />
-    <Compile Include="Extensions.cs" />
-    <Compile Include="Levenshtein.cs" />
     <Compile Include="ObservableObject.cs" />
-    <Compile Include="OptiMateProtocol.cs" />
+    <Compile Include="OptimateSchema.cs" />
+    <Compile Include="OptimateSchemaExtensions.cs" />
     <Compile Include="Script.cs" />
     <Compile Include="ViewModel.cs" />
     <Page Include="MainWindow.xaml">

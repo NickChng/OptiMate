@@ -9,7 +9,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace VMS.TPS.Converters
+namespace Optimate.Converters
 {
     public class StructureTextBoxColourConverter : IValueConverter
     {
@@ -253,13 +253,12 @@ namespace VMS.TPS.Converters
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
 
-            OperatorTypes Op = OperatorTypes.UNDEFINED;
+            OperatorType Op = OperatorType.UNDEFINED;
             if (Enum.TryParse(value as string, out Op))
             {
-
-                switch (Op)
+            switch (Op)
                 {
-                    case OperatorTypes.margin:
+                    case OperatorType.margin:
                         return Visibility.Hidden;
                     default:
                         return Visibility.Visible;
@@ -394,7 +393,7 @@ namespace VMS.TPS.Converters
                     var CurrentId = defaultId.ToUpper();
                     var stripString = S.Replace(@"B_", @"").Replace(@"_", @"").ToUpper();
                     var CompString = CurrentId.Replace(@"B_", @"").Replace(@"_", @"").ToUpper();
-                    double LDist = LevenshteinDistance.Compute(stripString, CompString);
+                    double LDist = Helpers.LevenshteinDistance.Compute(stripString, CompString);
                     if (stripString.ToUpper().Contains(CompString) && stripString != "" && CompString != "")
                         LDist = Math.Min(LDist, 1.5);
                     LD[c] = LDist;
@@ -436,7 +435,7 @@ namespace VMS.TPS.Converters
                     var CurrentId = init.ToUpper();
                     var stripString = S.Replace(@"B_", @"").Replace(@"_", @"").ToUpper();
                     var CompString = CurrentId.Replace(@"B_", @"").Replace(@"_", @"").ToUpper();
-                    double LDist = LevenshteinDistance.Compute(stripString, CompString);
+                    double LDist = Helpers.LevenshteinDistance.Compute(stripString, CompString);
                     if (stripString.ToUpper().Contains(CompString) && stripString != "" && CompString != "")
                         LDist = Math.Min(LDist, 1.5);
                     LD[c] = LDist;

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace VMS.TPS
+namespace Optimate
 {
     public enum WarningLevels
     {

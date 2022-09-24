@@ -20,7 +20,7 @@ using VMS.TPS.Common.Model.Types;
 
 [assembly: ESAPIScript(IsWriteable = true)]
 
-namespace VMS.TPS
+namespace Optimate
 {
     public class ProtocolPointer
     {
@@ -46,7 +46,7 @@ namespace VMS.TPS
                 base.OnCollectionChanged(e);
         }
     }
-    
+
 
     [AddINotifyPropertyChangedInterface]
 
@@ -164,7 +164,7 @@ namespace VMS.TPS
                                     return false;
                             }
                         }
-                      
+
                     }
                 }
                 else
@@ -233,7 +233,7 @@ namespace VMS.TPS
                         List<OptiMateProtocolOptiStructureInstruction> UpdatedInstructions = new List<OptiMateProtocolOptiStructureInstruction>();
                         if (ProtocolStructure.Instruction != null)
                             UpdatedInstructions = ProtocolStructure.Instruction.ToList();
-                        UpdatedInstructions.Insert(0, new OptiMateProtocolOptiStructureInstruction() { Operator = @"copy", DefaultTarget = ProtocolStructure.BaseStructure });
+                        UpdatedInstructions.Insert(0, new OptiMateProtocolOptiStructureInstruction() { Operator = OperatorType.copy, DefaultTarget = ProtocolStructure.BaseStructure });
                         ProtocolStructure.Instruction = UpdatedInstructions.ToArray(); // Add copy instruction 
                         foreach (var I in ProtocolStructure.Instruction)
                         {
@@ -267,7 +267,6 @@ namespace VMS.TPS
         {
             try
             {
-                Helpers.Logger.Initialize();
                 var AssemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                 ProtocolPath = Path.Combine(AssemblyPath, @"Protocols");
                 ReloadTemplates();
@@ -279,7 +278,6 @@ namespace VMS.TPS
                     p.BeginModifications();
                     currentPlanId = ss.Id;
                     structures = ss.Structures.Select(x => x.Id).ToList();
-                    Helpers.Logger.PID = p.Id;
                 }
                 ));
                 if (Done)
@@ -381,7 +379,7 @@ namespace VMS.TPS
                 if (OS != null && I != null)
                 {
                     var newInstructions = OS.Instruction.ToList();
-                    var newI = new OptiMateProtocolOptiStructureInstruction() { Operator = "crop" };
+                    var newI = new OptiMateProtocolOptiStructureInstruction() { Operator = OperatorType.crop };
                     newI.PropertyChanged += ValidateControl;
                     newInstructions.Insert(newInstructions.IndexOf(I) + 1, newI);
                     OS.Instruction = newInstructions.ToArray();
@@ -391,7 +389,7 @@ namespace VMS.TPS
         }
         public void AddStructure(object param = null)
         {
-            var newInstruction = new OptiMateProtocolOptiStructureInstruction() { Operator = @"copy" };
+            var newInstruction = new OptiMateProtocolOptiStructureInstruction() { Operator = OperatorType.copy };
             newInstruction.PropertyChanged += ValidateControl;
             List<OptiMateProtocolOptiStructureInstruction> Instructions = new List<OptiMateProtocolOptiStructureInstruction>() { newInstruction };
             var OS = new OptiMateProtocolOptiStructure() { isNew = true, Instruction = Instructions.ToArray() };
@@ -418,6 +416,8 @@ namespace VMS.TPS
                     if (UpdatedInstructions.Count() > 0)
                         ProtocolStructure.Instruction = UpdatedInstructions.ToArray();
                     ProtocolStructure.SuppressNotification = false;
+
+
                 }
             }
             //ValidateControl(null, new PropertyChangedEventArgs(nameof(RemoveInstruction)));
@@ -458,293 +458,290 @@ namespace VMS.TPS
                         if (ProtocolStructure.Instruction != null)
                             foreach (var I in ProtocolStructure.Instruction)
                             {
-                                OperatorTypes Op = OperatorTypes.UNDEFINED;
-                                if (Enum.TryParse(I.Operator, out Op))
+                                OperatorType Op = OperatorType.UNDEFINED;
+                                switch (Op)
                                 {
-                                    switch (Op)
-                                    {
-                                        case OperatorTypes.copy:
-                                            string BaseStructure_Id = I.Target;
-                                            if (string.IsNullOrEmpty(I.Target))
+                                    case OperatorType.copy:
+                                        string BaseStructure_Id = I.Target;
+                                        if (string.IsNullOrEmpty(I.Target))
+                                        {
+                                            ui.Invoke(() =>
                                             {
-                                                ui.Invoke(() =>
-                                                {
-                                                    Errors = true;
-                                                    var warning = string.Format("Copy structure for {0} is not defined, skipping structure...", ProtocolStructure.StructureId);
-                                                    PauseTillErrorAcknowledged(ui, warning);
-                                                });
-                                                continue;
-                                            }
-                                            Structure BaseStructure = S.Structures.FirstOrDefault(x => x.Id.ToUpper() == I.Target.ToUpper());
-                                            if (BaseStructure == null)
+                                                Errors = true;
+                                                var warning = string.Format("Copy structure for {0} is not defined, skipping structure...", ProtocolStructure.StructureId);
+                                                PauseTillErrorAcknowledged(ui, warning);
+                                            });
+                                            continue;
+                                        }
+                                        Structure BaseStructure = S.Structures.FirstOrDefault(x => x.Id.ToUpper() == I.Target.ToUpper());
+                                        if (BaseStructure == null)
+                                        {
+                                            ui.Invoke(() =>
                                             {
-                                                ui.Invoke(() =>
-                                                {
-                                                    Errors = true;
-                                                    var warning = string.Format("Copy structure for {0} does not exist, skipping structure...", ProtocolStructure.StructureId);
-                                                    PauseTillErrorAcknowledged(ui, warning);
-                                                });
-                                                continue;
-                                            }
-                                            else
+                                                Errors = true;
+                                                var warning = string.Format("Copy structure for {0} does not exist, skipping structure...", ProtocolStructure.StructureId);
+                                                PauseTillErrorAcknowledged(ui, warning);
+                                            });
+                                            continue;
+                                        }
+                                        else
+                                        {
+                                            OS = S.Structures.FirstOrDefault(x => x.Id.ToUpper() == ProtocolStructure.StructureId.ToUpper());
+                                            if (OS != null)
                                             {
-                                                OS = S.Structures.FirstOrDefault(x => x.Id.ToUpper() == ProtocolStructure.StructureId.ToUpper());
-                                                if (OS != null)
+                                                if (!OS.IsEmpty)
                                                 {
-                                                    if (!OS.IsEmpty)
-                                                    {
-                                                        OS.SegmentVolume = OS.SegmentVolume.And(OS.SegmentVolume.Not()); // clear structure;
-                                                    }
-                                                    if (BaseStructure.IsHighResolution && !OS.IsHighResolution)
-                                                    {
-                                                        OS.ConvertToHighResolution();
-                                                        OS.SegmentVolume = BaseStructure.SegmentVolume;
-                                                    }
-                                                    else if (!BaseStructure.IsHighResolution && OS.IsHighResolution)
-                                                    {
-                                                        string TempHRStructureName = @"TEMPHR_OptiMate";
-                                                        var HRTemp = S.Structures.FirstOrDefault(x => x.Id == TempHRStructureName);
-                                                        if (HRTemp != null)
-                                                            S.RemoveStructure(HRTemp);
-                                                        HRTemp = S.AddStructure(ProtocolStructure.Type, TempHRStructureName);
-                                                        HRTemp.SegmentVolume = BaseStructure.SegmentVolume;
-                                                        HRTemp.ConvertToHighResolution();
-                                                        OS.SegmentVolume = HRTemp.SegmentVolume;
+                                                    OS.SegmentVolume = OS.SegmentVolume.And(OS.SegmentVolume.Not()); // clear structure;
+                                                }
+                                                if (BaseStructure.IsHighResolution && !OS.IsHighResolution)
+                                                {
+                                                    OS.ConvertToHighResolution();
+                                                    OS.SegmentVolume = BaseStructure.SegmentVolume;
+                                                }
+                                                else if (!BaseStructure.IsHighResolution && OS.IsHighResolution)
+                                                {
+                                                    string TempHRStructureName = @"TEMPHR_OptiMate";
+                                                    var HRTemp = S.Structures.FirstOrDefault(x => x.Id == TempHRStructureName);
+                                                    if (HRTemp != null)
                                                         S.RemoveStructure(HRTemp);
-                                                        OS.SegmentVolume = BaseStructure.SegmentVolume;
-                                                    }
-                                                    else
-                                                        OS.SegmentVolume = BaseStructure.SegmentVolume;
-                                                    if (ProtocolStructure.isHighResolution && !OS.IsHighResolution)
-                                                        OS.ConvertToHighResolution();
-
+                                                    HRTemp = S.AddStructure(ProtocolStructure.Type, TempHRStructureName);
+                                                    HRTemp.SegmentVolume = BaseStructure.SegmentVolume;
+                                                    HRTemp.ConvertToHighResolution();
+                                                    OS.SegmentVolume = HRTemp.SegmentVolume;
+                                                    S.RemoveStructure(HRTemp);
+                                                    OS.SegmentVolume = BaseStructure.SegmentVolume;
                                                 }
                                                 else
-                                                {
-                                                    DICOMTypes DT;
-                                                    Enum.TryParse(ProtocolStructure.Type.ToUpper(), out DT);
-                                                    bool validNewStructure = S.CanAddStructure(DT.ToString(), ProtocolStructure.StructureId);
-                                                    OS = S.AddStructure(DT.ToString(), ProtocolStructure.StructureId);
-                                                    if (BaseStructure.IsHighResolution)
-                                                    {
-                                                        OS.ConvertToHighResolution();
-                                                    }
                                                     OS.SegmentVolume = BaseStructure.SegmentVolume;
-                                                    if (ProtocolStructure.isHighResolution && !OS.IsHighResolution)
-                                                    {
-                                                        OS.ConvertToHighResolution();
-                                                    }
-                                                }
-                                            }
-                                            break;
-                                        case OperatorTypes.crop:
-                                            Structure Target = GetTargetStructure(OS, ProtocolStructure, S, I.Target);
-                                            if (Target == null)
-                                            {
-                                                ui.Invoke(() =>
-                                                {
-                                                    Errors = true;
-                                                    var warning = string.Format("Crop target for {0} is invalid, crop aborted...", ProtocolStructure.StructureId);
-                                                    PauseTillErrorAcknowledged(ui, warning);
-                                                });
-                                                break;
-                                            }
-                                            double cropParameter = 0;
-                                            if (!string.IsNullOrEmpty(I.OperatorParameter))
-                                            {
-                                                if (!double.TryParse(I.OperatorParameter, out cropParameter))
-                                                {
-                                                    ui.Invoke(() =>
-                                                    {
-                                                        Errors = true;
-                                                        var warning = string.Format("Crop margin for {0} is invalid, defaulting to no additional margin...", ProtocolStructure.StructureId);
-                                                        PauseTillErrorAcknowledged(ui, warning);
-                                                    });
-                                                }
-                                            }
-                                            bool cropExternal = false;
-                                            if (!string.IsNullOrEmpty(I.OperatorParameter2))
-                                            {
-                                                if (!bool.TryParse(I.OperatorParameter2, out cropExternal))
-                                                {
-                                                    ui.Invoke(() =>
-                                                    {
-                                                        Errors = true;
-                                                        var warning = string.Format("Unable to read external crop setting (true/false) for {0}, defaulting to external crop...", ProtocolStructure.StructureId);
-                                                        PauseTillErrorAcknowledged(ui, warning);
-                                                    });
-                                                }
-                                            }
-                                            if (cropExternal)
-                                            {
-                                                OS.SegmentVolume = OS.SegmentVolume.And(Target.SegmentVolume.Margin(-cropParameter));
+                                                if (ProtocolStructure.isHighResolution && !OS.IsHighResolution)
+                                                    OS.ConvertToHighResolution();
+
                                             }
                                             else
                                             {
-                                                OS.SegmentVolume = OS.SegmentVolume.Sub(Target.SegmentVolume.Margin(cropParameter));
+                                                DICOMTypes DT;
+                                                Enum.TryParse(ProtocolStructure.Type.ToUpper(), out DT);
+                                                bool validNewStructure = S.CanAddStructure(DT.ToString(), ProtocolStructure.StructureId);
+                                                OS = S.AddStructure(DT.ToString(), ProtocolStructure.StructureId);
+                                                if (BaseStructure.IsHighResolution)
+                                                {
+                                                    OS.ConvertToHighResolution();
+                                                }
+                                                OS.SegmentVolume = BaseStructure.SegmentVolume;
+                                                if (ProtocolStructure.isHighResolution && !OS.IsHighResolution)
+                                                {
+                                                    OS.ConvertToHighResolution();
+                                                }
                                             }
+                                        }
+                                        break;
+                                    case OperatorType.crop:
+                                        Structure Target = GetTargetStructure(OS, ProtocolStructure, S, I.Target);
+                                        if (Target == null)
+                                        {
+                                            ui.Invoke(() =>
+                                            {
+                                                Errors = true;
+                                                var warning = string.Format("Crop target for {0} is invalid, crop aborted...", ProtocolStructure.StructureId);
+                                                PauseTillErrorAcknowledged(ui, warning);
+                                            });
                                             break;
-                                        case OperatorTypes.sub:
-                                            Target = GetTargetStructure(OS, ProtocolStructure, S, I.Target);
-                                            if (Target == null)
+                                        }
+                                        double cropParameter = 0;
+                                        if (!string.IsNullOrEmpty(I.OperatorParameter))
+                                        {
+                                            if (!double.TryParse(I.OperatorParameter, out cropParameter))
                                             {
                                                 ui.Invoke(() =>
                                                 {
                                                     Errors = true;
-                                                    var warning = string.Format("Error during creation of {0} : Target of SUB operation could not be found", ProtocolStructure.StructureId);
+                                                    var warning = string.Format("Crop margin for {0} is invalid, defaulting to no additional margin...", ProtocolStructure.StructureId);
                                                     PauseTillErrorAcknowledged(ui, warning);
                                                 });
-                                                break;
                                             }
-                                            OS.SegmentVolume = OS.SegmentVolume.Sub(Target);
+                                        }
+                                        bool cropExternal = false;
+                                        if (!string.IsNullOrEmpty(I.OperatorParameter2))
+                                        {
+                                            if (!bool.TryParse(I.OperatorParameter2, out cropExternal))
+                                            {
+                                                ui.Invoke(() =>
+                                                {
+                                                    Errors = true;
+                                                    var warning = string.Format("Unable to read external crop setting (true/false) for {0}, defaulting to external crop...", ProtocolStructure.StructureId);
+                                                    PauseTillErrorAcknowledged(ui, warning);
+                                                });
+                                            }
+                                        }
+                                        if (cropExternal)
+                                        {
+                                            OS.SegmentVolume = OS.SegmentVolume.And(Target.SegmentVolume.Margin(-cropParameter));
+                                        }
+                                        else
+                                        {
+                                            OS.SegmentVolume = OS.SegmentVolume.Sub(Target.SegmentVolume.Margin(cropParameter));
+                                        }
+                                        break;
+                                    case OperatorType.sub:
+                                        Target = GetTargetStructure(OS, ProtocolStructure, S, I.Target);
+                                        if (Target == null)
+                                        {
+                                            ui.Invoke(() =>
+                                            {
+                                                Errors = true;
+                                                var warning = string.Format("Error during creation of {0} : Target of SUB operation could not be found", ProtocolStructure.StructureId);
+                                                PauseTillErrorAcknowledged(ui, warning);
+                                            });
                                             break;
-                                        case OperatorTypes.margin:
-                                            double UniformMargin;
-                                            double X2margin;
-                                            double Y1margin;
-                                            double Y2margin;
-                                            double Z1margin;
-                                            double Z2margin;
-                                            if (string.IsNullOrEmpty(I.OperatorParameter))
+                                        }
+                                        OS.SegmentVolume = OS.SegmentVolume.Sub(Target);
+                                        break;
+                                    case OperatorType.margin:
+                                        double UniformMargin;
+                                        double X2margin;
+                                        double Y1margin;
+                                        double Y2margin;
+                                        double Z1margin;
+                                        double Z2margin;
+                                        if (string.IsNullOrEmpty(I.OperatorParameter))
+                                        {
+                                            Errors = true;
+                                            var warning = string.Format(@"Margin for {0} is invalid, aborting margin operation...", OS.Id);
+                                            PauseTillErrorAcknowledged(ui, warning);
+                                            break;
+                                        }
+                                        else
+                                        {
+                                            if (!double.TryParse(I.OperatorParameter, out UniformMargin))
                                             {
                                                 Errors = true;
                                                 var warning = string.Format(@"Margin for {0} is invalid, aborting margin operation...", OS.Id);
                                                 PauseTillErrorAcknowledged(ui, warning);
                                                 break;
                                             }
-                                            else
+                                            else if (UniformMargin < 0)
                                             {
-                                                if (!double.TryParse(I.OperatorParameter, out UniformMargin))
-                                                {
-                                                    Errors = true;
-                                                    var warning = string.Format(@"Margin for {0} is invalid, aborting margin operation...", OS.Id);
-                                                    PauseTillErrorAcknowledged(ui, warning);
-                                                    break;
-                                                }
-                                                else if (UniformMargin < 0)
-                                                {
-                                                    OS.SegmentVolume = OS.SegmentVolume.Margin(UniformMargin);
-                                                    break;
-                                                }
+                                                OS.SegmentVolume = OS.SegmentVolume.Margin(UniformMargin);
+                                                break;
                                             }
-                                            if (string.IsNullOrEmpty(I.OperatorParameter2))
+                                        }
+                                        if (string.IsNullOrEmpty(I.OperatorParameter2))
+                                            Y1margin = UniformMargin;
+                                        else
+                                        {
+                                            if (!double.TryParse(I.OperatorParameter2, out Y1margin))
+                                            {
+                                                Errors = true;
+                                                PauseTillErrorAcknowledged(ui, string.Format(@"ANTERIOR margin for {0} is invalid, using uniform margin...", OS.Id));
                                                 Y1margin = UniformMargin;
-                                            else
-                                            {
-                                                if (!double.TryParse(I.OperatorParameter2, out Y1margin))
-                                                {
-                                                    Errors = true;
-                                                    PauseTillErrorAcknowledged(ui, string.Format(@"ANTERIOR margin for {0} is invalid, using uniform margin...", OS.Id));
-                                                    Y1margin = UniformMargin;
-                                                }
                                             }
-                                            if (string.IsNullOrEmpty(I.OperatorParameter3))
+                                        }
+                                        if (string.IsNullOrEmpty(I.OperatorParameter3))
+                                            Z1margin = UniformMargin;
+                                        else
+                                        {
+                                            if (!double.TryParse(I.OperatorParameter3, out Z1margin))
+                                            {
+                                                Errors = true;
+                                                PauseTillErrorAcknowledged(ui, string.Format(@"INFERIOR margin for {0} is invalid, using uniform margin...", OS.Id));
                                                 Z1margin = UniformMargin;
-                                            else
-                                            {
-                                                if (!double.TryParse(I.OperatorParameter3, out Z1margin))
-                                                {
-                                                    Errors = true;
-                                                    PauseTillErrorAcknowledged(ui, string.Format(@"INFERIOR margin for {0} is invalid, using uniform margin...", OS.Id));
-                                                    Z1margin = UniformMargin;
-                                                }
                                             }
-                                            if (string.IsNullOrEmpty(I.OperatorParameter4))
+                                        }
+                                        if (string.IsNullOrEmpty(I.OperatorParameter4))
+                                            X2margin = UniformMargin;
+                                        else
+                                        {
+                                            if (!double.TryParse(I.OperatorParameter4, out X2margin))
+                                            {
+                                                Errors = true;
+                                                PauseTillErrorAcknowledged(ui, string.Format(@"LEFT margin for {0} is invalid, using uniform margin...", OS.Id));
                                                 X2margin = UniformMargin;
-                                            else
-                                            {
-                                                if (!double.TryParse(I.OperatorParameter4, out X2margin))
-                                                {
-                                                    Errors = true;
-                                                    PauseTillErrorAcknowledged(ui, string.Format(@"LEFT margin for {0} is invalid, using uniform margin...", OS.Id));
-                                                    X2margin = UniformMargin;
-                                                }
                                             }
-                                            if (string.IsNullOrEmpty(I.OperatorParameter5))
+                                        }
+                                        if (string.IsNullOrEmpty(I.OperatorParameter5))
+                                            Y2margin = UniformMargin;
+                                        else
+                                        {
+                                            if (!double.TryParse(I.OperatorParameter5, out Y2margin))
+                                            {
+                                                Errors = true;
+                                                PauseTillErrorAcknowledged(ui, string.Format(@"POSTERIOR margin for {0} is invalid, using uniform margin...", OS.Id));
                                                 Y2margin = UniformMargin;
-                                            else
-                                            {
-                                                if (!double.TryParse(I.OperatorParameter5, out Y2margin))
-                                                {
-                                                    Errors = true;
-                                                    PauseTillErrorAcknowledged(ui, string.Format(@"POSTERIOR margin for {0} is invalid, using uniform margin...", OS.Id));
-                                                    Y2margin = UniformMargin;
-                                                }
                                             }
-                                            if (string.IsNullOrEmpty(I.OperatorParameter6))
+                                        }
+                                        if (string.IsNullOrEmpty(I.OperatorParameter6))
+                                            Z2margin = UniformMargin;
+                                        else
+                                        {
+                                            if (!double.TryParse(I.OperatorParameter6, out Z2margin))
+                                            {
+                                                Errors = true;
+                                                PauseTillErrorAcknowledged(ui, string.Format(@"POSTERIOR margin for {0} is invalid, using uniform margin...", OS.Id));
                                                 Z2margin = UniformMargin;
-                                            else
-                                            {
-                                                if (!double.TryParse(I.OperatorParameter6, out Z2margin))
-                                                {
-                                                    Errors = true;
-                                                    PauseTillErrorAcknowledged(ui, string.Format(@"POSTERIOR margin for {0} is invalid, using uniform margin...", OS.Id));
-                                                    Z2margin = UniformMargin;
-                                                }
                                             }
-                                            OS.SegmentVolume = OS.SegmentVolume.AsymmetricMargin(new AxisAlignedMargins(StructureMarginGeometry.Outer, UniformMargin, Y1margin, Z1margin, X2margin, Y2margin, Z2margin));
-                                            break;
-                                        case OperatorTypes.and:
-                                            Target = GetTargetStructure(OS, ProtocolStructure, S, I.Target);
-                                            if (Target == null)
-                                            {
-                                                ui.Invoke(() =>
-                                                {
-                                                    Errors = true;
-                                                    var warning = string.Format("Error during creation of {0} : Target of AND operation could not be found", ProtocolStructure.StructureId);
-                                                    PauseTillErrorAcknowledged(ui, warning);
-                                                });
-                                                break;
-                                            }
-                                            OS.SegmentVolume = OS.SegmentVolume.And(Target);
-                                            break;
-                                        case OperatorTypes.subfrom:
-                                            Target = GetTargetStructure(OS, ProtocolStructure, S, I.Target);
-                                            if (Target == null)
-                                            {
-                                                ui.Invoke(() =>
-                                                {
-                                                    Errors = true;
-                                                    var warning = string.Format("Error during creation of {0} : Target of AND operation could not be found", ProtocolStructure.StructureId);
-                                                    PauseTillErrorAcknowledged(ui, warning);
-                                                });
-                                                break;
-                                            }
-                                            OS.SegmentVolume = Target.Sub(OS.SegmentVolume);
-                                            break;
-                                        case OperatorTypes.or:
-                                            Target = GetTargetStructure(OS, ProtocolStructure, S, I.Target);
-                                            if (Target == null)
-                                            {
-                                                ui.Invoke(() =>
-                                                {
-                                                    Errors = true;
-                                                    var warning = string.Format("Error during creation of {0} : Target of OR operation could not be found", ProtocolStructure.StructureId);
-                                                    PauseTillErrorAcknowledged(ui, warning);
-                                                });
-                                                break;
-                                            }
-                                            OS.SegmentVolume = OS.SegmentVolume.Or(Target);
-                                            break;
-                                        default:
+                                        }
+                                        OS.SegmentVolume = OS.SegmentVolume.AsymmetricMargin(new AxisAlignedMargins(StructureMarginGeometry.Outer, UniformMargin, Y1margin, Z1margin, X2margin, Y2margin, Z2margin));
+                                        break;
+                                    case OperatorType.and:
+                                        Target = GetTargetStructure(OS, ProtocolStructure, S, I.Target);
+                                        if (Target == null)
+                                        {
                                             ui.Invoke(() =>
                                             {
                                                 Errors = true;
-                                                var warning = string.Format("Opti structure ({0}) creation operation instruction references unrecognized operator ({1})", ProtocolStructure.StructureId, I.Operator);
+                                                var warning = string.Format("Error during creation of {0} : Target of AND operation could not be found", ProtocolStructure.StructureId);
                                                 PauseTillErrorAcknowledged(ui, warning);
                                             });
                                             break;
-                                    }
+                                        }
+                                        OS.SegmentVolume = OS.SegmentVolume.And(Target);
+                                        break;
+                                    case OperatorType.subfrom:
+                                        Target = GetTargetStructure(OS, ProtocolStructure, S, I.Target);
+                                        if (Target == null)
+                                        {
+                                            ui.Invoke(() =>
+                                            {
+                                                Errors = true;
+                                                var warning = string.Format("Error during creation of {0} : Target of AND operation could not be found", ProtocolStructure.StructureId);
+                                                PauseTillErrorAcknowledged(ui, warning);
+                                            });
+                                            break;
+                                        }
+                                        OS.SegmentVolume = Target.Sub(OS.SegmentVolume);
+                                        break;
+                                    case OperatorType.or:
+                                        Target = GetTargetStructure(OS, ProtocolStructure, S, I.Target);
+                                        if (Target == null)
+                                        {
+                                            ui.Invoke(() =>
+                                            {
+                                                Errors = true;
+                                                var warning = string.Format("Error during creation of {0} : Target of OR operation could not be found", ProtocolStructure.StructureId);
+                                                PauseTillErrorAcknowledged(ui, warning);
+                                            });
+                                            break;
+                                        }
+                                        OS.SegmentVolume = OS.SegmentVolume.Or(Target);
+                                        break;
+                                    default:
+                                        ui.Invoke(() =>
+                                        {
+                                            Errors = true;
+                                            var warning = string.Format("Opti structure ({0}) creation operation instruction references unrecognized operator ({1})", ProtocolStructure.StructureId, I.Operator);
+                                            PauseTillErrorAcknowledged(ui, warning);
+                                        });
+                                        break;
                                 }
-                                else
-                                {
-                                    ui.Invoke(() =>
-                                    {
-                                        Errors = true;
-                                        StatusMessage = string.Format(@"Structure {0} has an instruction with an invalid operator. Please review.", ProtocolStructure.StructureId);
-                                    });
-                                    return;
-                                }
+                                //else
+                                //{
+                                //    ui.Invoke(() =>
+                                //    {
+                                //        Errors = true;
+                                //        StatusMessage = string.Format(@"Structure {0} has an instruction with an invalid operator. Please review.", ProtocolStructure.StructureId);
+                                //    });
+                                //    return;
+                                //}
                                 var TemOStructure = S.Structures.FirstOrDefault(x => x.Id.ToUpper() == TempStructureName.ToUpper());
                                 if (TemOStructure != null)
                                     S.RemoveStructure(TemOStructure);
@@ -855,32 +852,32 @@ namespace VMS.TPS
             Protocols.SuppressNotification = true;
             //await Task.Run(() =>
             //{
-                try
-                {
-                    XmlSerializer Ser = new XmlSerializer(typeof(OptiMateProtocol));
-                    
-                    foreach (var file in Directory.GetFiles(ProtocolPath, "*.xml"))
-                    {
-                        using (StreamReader protocol = new StreamReader(file))
-                        {
-                            try
-                            {
-                                var OMProtocol = (OptiMateProtocol)Ser.Deserialize(protocol);
-                                Protocols.Add(new ProtocolPointer() { ProtocolDisplayName = OMProtocol.ProtocolDisplayName, ProtocolPath = file });
-                            }
-                            catch (Exception ex)
-                            {
-                                Helpers.Logger.AddLog(string.Format("Unable to read protocol file: {0}\r\n\r\nDetails: {1}", file, ex.InnerException));
-                                MessageBox.Show(string.Format("Unable to read protocol file {0}\r\n\r\nDetails: {1}", file, ex.InnerException));
+            try
+            {
+                XmlSerializer Ser = new XmlSerializer(typeof(OptiMateProtocol));
 
-                            }
+                foreach (var file in Directory.GetFiles(ProtocolPath, "*.xml"))
+                {
+                    using (StreamReader protocol = new StreamReader(file))
+                    {
+                        try
+                        {
+                            var OMProtocol = (OptiMateProtocol)Ser.Deserialize(protocol);
+                            Protocols.Add(new ProtocolPointer() { ProtocolDisplayName = OMProtocol.ProtocolDisplayName, ProtocolPath = file });
+                        }
+                        catch (Exception ex)
+                        {
+                            Helpers.Logger.AddLog(string.Format("Unable to read protocol file: {0}\r\n\r\nDetails: {1}", file, ex.InnerException));
+                            MessageBox.Show(string.Format("Unable to read protocol file {0}\r\n\r\nDetails: {1}", file, ex.InnerException));
+
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(string.Format("{0}\r\n{1}\r\n{2}", ex.Message, ex.InnerException, ex.StackTrace));
-                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(string.Format("{0}\r\n{1}\r\n{2}", ex.Message, ex.InnerException, ex.StackTrace));
+            }
             //}          );
             Protocols.SuppressNotification = false;
             Working = false;
@@ -907,15 +904,15 @@ namespace VMS.TPS
         DOSE_REGION
     }
 
-    public enum OperatorTypes
-    {
-        UNDEFINED,
-        copy,
-        margin,
-        or,
-        and,
-        crop,
-        sub,
-        subfrom
-    }
+    //public enum OperatorTypes
+    //{
+    //    UNDEFINED,
+    //    copy,
+    //    margin,
+    //    or,
+    //    and,
+    //    crop,
+    //    sub,
+    //    subfrom
+    //}
 }

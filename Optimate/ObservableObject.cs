@@ -5,7 +5,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 
-namespace VMS.TPS
+namespace Optimate
 {
     public abstract class ObservableObject : INotifyPropertyChanged, INotifyDataErrorInfo
     {

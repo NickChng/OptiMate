@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
-namespace VMS.TPS
+namespace Optimate
 {
     public class DelegateCommand : ICommand
     {
