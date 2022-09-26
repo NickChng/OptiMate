@@ -122,28 +122,19 @@ namespace Optimate
                     return new SolidColorBrush(Colors.Orange);
             }
         }
-        private void ValidateControl(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        private void ValidateInstruction(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             RaisePropertyChangedEvent(nameof(allInputsValid));
             RaisePropertyChangedEvent(nameof(StartButtonColor));
             RaisePropertyChangedEvent(nameof(StartButtonTooltip));
-            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.isTargetParameterValid));
-            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.isOperatorParameterValid));
-            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.operatorParameterColor));
-            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.isOperatorParameter2Valid));
-            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.operatorParameter2Color));
-            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.isOperatorParameter3Valid));
-            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.operatorParameter3Color));
-            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.isOperatorParameter4Valid));
-            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.operatorParameter4Color));
-            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.isOperatorParameter5Valid));
-            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.operatorParameter5Color));
-            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.isOperatorParameter6Valid));
-            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.operatorParameter6Color));
-            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.isOperatorParameter7Valid));
-            RaisePropertyChangedEvent(nameof(OptiMateProtocolOptiStructureInstruction.operatorParameter7Color));
         }
 
+        private void ValidateStructure(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            RaisePropertyChangedEvent(nameof(allInputsValid));
+            RaisePropertyChangedEvent(nameof(StartButtonColor));
+            RaisePropertyChangedEvent(nameof(StartButtonTooltip));
+        }
         public Visibility ProtocolVisibility
         {
             get
@@ -232,10 +223,12 @@ namespace Optimate
                     // Unsubscribe
                     foreach (var OS in ProtocolStructures)
                     {
-                        OS.PropertyChanged -= ValidateControl;
+                        OS.PropertyChanged -= ValidateStructure;
+                        OS.StopDataValidationNotifications();
                         foreach (var I in OS.Instruction)
                         {
-                            I.PropertyChanged -= ValidateControl;
+                            I.PropertyChanged -= ValidateInstruction;
+                            I.StopDataValidationNotifications();
                         }
                     }
                 }
@@ -245,7 +238,8 @@ namespace Optimate
                     Helpers.Logger.AddLog("Structures cleared");
                     foreach (var ProtocolStructure in ActiveProtocol.OptiStructures)
                     {
-                        ProtocolStructure.PropertyChanged += ValidateControl;
+                        ProtocolStructure.PropertyChanged += ValidateStructure;
+                        ProtocolStructure.StartDataValidationNotifications();
                         newStructures.Add(ProtocolStructure);
                         List<OptiMateProtocolOptiStructureInstruction> UpdatedInstructions = new List<OptiMateProtocolOptiStructureInstruction>();
                         if (ProtocolStructure.Instruction != null)
@@ -254,7 +248,8 @@ namespace Optimate
                         ProtocolStructure.Instruction = UpdatedInstructions.ToArray(); // Add copy instruction 
                         foreach (var I in ProtocolStructure.Instruction)
                         {
-                            I.PropertyChanged += ValidateControl;
+                            I.PropertyChanged += ValidateInstruction;
+                            I.StartDataValidationNotifications();
                             List<string> AvailableIds = new List<string>(EclipseIds);
                             int Index = ActiveProtocol.OptiStructures.Select(x => x.StructureId).ToList().IndexOf(ProtocolStructure.StructureId);
                             if (Index >= 0)
@@ -397,22 +392,25 @@ namespace Optimate
                 {
                     var newInstructions = OS.Instruction.ToList();
                     var newI = new OptiMateProtocolOptiStructureInstruction() { Operator = OperatorType.crop };
-                    newI.PropertyChanged += ValidateControl;
+                    newI.PropertyChanged += ValidateInstruction;
                     newInstructions.Insert(newInstructions.IndexOf(I) + 1, newI);
                     OS.Instruction = newInstructions.ToArray();
+                    newI.StartDataValidationNotifications();
+
                 }
             }
-            ValidateControl(null, new PropertyChangedEventArgs(nameof(AddInstruction)));
+            
         }
         public void AddStructure(object param = null)
         {
             var newInstruction = new OptiMateProtocolOptiStructureInstruction() { Operator = OperatorType.copy };
-            newInstruction.PropertyChanged += ValidateControl;
+            newInstruction.PropertyChanged += ValidateInstruction;
             List<OptiMateProtocolOptiStructureInstruction> Instructions = new List<OptiMateProtocolOptiStructureInstruction>() { newInstruction };
             var OS = new OptiMateProtocolOptiStructure() { isNew = true, Instruction = Instructions.ToArray() };
-            OS.PropertyChanged += ValidateControl;
+            OS.PropertyChanged += ValidateStructure;
             ProtocolStructures.Add(OS);
-            ValidateControl(null, new PropertyChangedEventArgs(nameof(AddInstruction)));
+            newInstruction.StartDataValidationNotifications();
+            OS.StartDataValidationNotifications();
         }
 
         public void RemoveInstruction(object param = null)
@@ -425,7 +423,8 @@ namespace Optimate
                 List<OptiMateProtocolOptiStructureInstruction> UpdatedInstructions = new List<OptiMateProtocolOptiStructureInstruction>();
                 if (I != null && ProtocolStructure != null)
                 {
-                    I.PropertyChanged -= ValidateControl;
+                    I.PropertyChanged -= ValidateInstruction;
+                    I.StopDataValidationNotifications();
                     ProtocolStructure.SuppressNotification = true;
                     foreach (var i in ProtocolStructure.Instruction)
                         if (i != I)
@@ -433,11 +432,9 @@ namespace Optimate
                     if (UpdatedInstructions.Count() > 0)
                         ProtocolStructure.Instruction = UpdatedInstructions.ToArray();
                     ProtocolStructure.SuppressNotification = false;
-
-
                 }
             }
-            //ValidateControl(null, new PropertyChangedEventArgs(nameof(RemoveInstruction)));
+            
         }
 
         public void RemoveAutoStructure(object param = null)
@@ -445,10 +442,10 @@ namespace Optimate
             OptiMateProtocolOptiStructure ProtocolStructure = param as OptiMateProtocolOptiStructure;
             if (ProtocolStructure != null)
             {
-                ProtocolStructure.PropertyChanged -= ValidateControl;
+                ProtocolStructure.PropertyChanged -= ValidateStructure;
                 if (ProtocolStructures.Contains(ProtocolStructure))
                     ProtocolStructures.Remove(ProtocolStructure);
-                ValidateControl(null, new PropertyChangedEventArgs(nameof(AddInstruction)));
+                //ValidateInstruction(null, new PropertyChangedEventArgs(nameof(AddInstruction)));
             }
         }
 
