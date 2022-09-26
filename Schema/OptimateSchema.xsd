@@ -10,6 +10,7 @@
       <xs:enumeration value="crop" />
       <xs:enumeration value="sub" />
       <xs:enumeration value="subfrom" />
+      <xs:enumeration value="convertDose" />
     </xs:restriction>
   </xs:simpleType>
   <xs:element name="OptiMateProtocol">

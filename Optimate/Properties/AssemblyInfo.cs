@@ -10,9 +10,9 @@ using System.Windows;
 [assembly: AssemblyTitle("OptiMate")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Health Shared Services BC")]
-[assembly: AssemblyProduct("Template")]
-[assembly: AssemblyCopyright("Copyright © Health Shared Services BC 2020")]
+[assembly: AssemblyCompany("BC Cancer")]
+[assembly: AssemblyProduct("")]
+[assembly: AssemblyCopyright("Copyright © BC Cancer 2022")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -51,5 +51,5 @@ using System.Windows;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.1.1")]
-[assembly: AssemblyFileVersion("1.1.1")]
+[assembly: AssemblyVersion("1.2.0.0")]
+[assembly: AssemblyFileVersion("1.2.0.0")]

@@ -12,8 +12,8 @@
         Title="OptiMate (v1.1)" Height="750" Width="1050" ResizeMode="NoResize"
     xmlns:theme="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero2">
     <Window.Resources>
-        <converters:AvailableOperators x:Key="AvailableOperators"/>
         <converters:isMarginInternal x:Key="isMarginInternal"/>
+        <converters:AvailableOperators x:Key="AvailableOperators"/>
         <converters:ShowRemoveInstructionButtonConverter x:Key="ShowRemoveInstructionButtonConverter"/>
         <converters:ValidNonEmptyParameterToColor x:Key="ValidNonEmptyParameterToColor"/>
         <converters:ValidIntegerParameterToColor x:Key="ValidIntegerParameterToColor"/>
@@ -21,7 +21,6 @@
         <converters:CropVisibilityConverter x:Key="CropVisibilityConverter"/>
         <converters:MarginVisibilityConverter x:Key="MarginVisibilityConverter"/>
         <converters:BoolToString x:Key="BoolToString"/>
-        <converters:AddInstructionVisibilityConverter x:Key="AddInstructionVisibilityConverter"/>
         <converters:InstructionCommandParameterConverter x:Key="InstructionCommandParameterConverter"/>
         <converters:SortStructuresConverter x:Key="SortStructuresConverter"/>
         <converters:AvailableStructureConverter x:Key="AvailableStructureConverter"/>
@@ -29,7 +28,6 @@
         <converters:TargetStatusToColor x:Key="TargetStatusToColor"/>
         <converters:VisibilityConverter x:Key="VisibilityConverter"/>
         <converters:VisibilityInverseConverter x:Key="VisibilityInverseConverter"/>
-        <converters:Color2Brush x:Key="Color2Brush"/>
         <converters:VisibilityMultiConverter x:Key="VisibilityMultiConverter"/>
         <ControlTemplate x:Key="ProgressBarNC" TargetType="{x:Type ProgressBar}">
             <Grid x:Name="TemplateRoot" SnapsToDevicePixels="True">
@@ -495,14 +493,6 @@
                             VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                         </Grid>
                         <ControlTemplate.Triggers>
-                            <!--<Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="{Binding Path=DataContext.Color, RelativeSource={RelativeSource AncestorType=ListViewItem}, Converter={StaticResource Color2Brush}, UpdateSourceTrigger=PropertyChanged}"/>
-                                <Setter TargetName="Bd" Property="Effect">
-                                    <Setter.Value>
-                                        <DropShadowEffect ShadowDepth="0.2" Color="{Binding Path=DataContext.Color, RelativeSource={RelativeSource AncestorType=ListViewItem}, Converter={StaticResource Color2Brush}, UpdateSourceTrigger=PropertyChanged}" Opacity="0.3" BlurRadius="1"/>
-                                    </Setter.Value>
-                                </Setter>
-                            </Trigger>-->
                             <Trigger Property="ItemsControl.AlternationIndex" Value="1">
                                 <Setter Property="Background" Value="AliceBlue"></Setter>
                             </Trigger>

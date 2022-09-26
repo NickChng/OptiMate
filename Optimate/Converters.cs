@@ -189,6 +189,7 @@ namespace Optimate.Converters
             throw new NotImplementedException();
         }
     }
+
     public class MarginVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
@@ -211,43 +212,43 @@ namespace Optimate.Converters
             throw new NotImplementedException();
         }
     }
-    public class WarningColorConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            if (value is WarningLevels)
-            {
-                WarningLevels V = (WarningLevels)value;
-                switch (V)
-                {
-                    case WarningLevels.Failure:
-                        return new SolidColorBrush(Colors.LightGoldenrodYellow);
-                    case WarningLevels.NoWarningCTVs:
-                        return new SolidColorBrush(Colors.PaleGreen);
-                    case WarningLevels.NoWarningPTVs:
-                        return new SolidColorBrush(Colors.PaleGreen);
-                    case WarningLevels.SubvolumeWarningCTVs:
-                        return new SolidColorBrush(Colors.Orange);
-                    case WarningLevels.SubvolumeWarningCTVen:
-                        return new SolidColorBrush(Colors.Orange);
-                    case WarningLevels.SubvolumeWarningGTVn:
-                        return new SolidColorBrush(Colors.Tomato);
-                    case WarningLevels.SubvolumeWarningGTVp:
-                        return new SolidColorBrush(Colors.Tomato);
-                    default:
-                        return new SolidColorBrush(Colors.LightGray);
-                }
-            }
-            else
-                return new SolidColorBrush(Colors.Transparent);
+    //public class WarningColorConverter : IValueConverter
+    //{
+    //    public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+    //    {
+    //        if (value is WarningLevels)
+    //        {
+    //            WarningLevels V = (WarningLevels)value;
+    //            switch (V)
+    //            {
+    //                case WarningLevels.Failure:
+    //                    return new SolidColorBrush(Colors.LightGoldenrodYellow);
+    //                case WarningLevels.NoWarningCTVs:
+    //                    return new SolidColorBrush(Colors.PaleGreen);
+    //                case WarningLevels.NoWarningPTVs:
+    //                    return new SolidColorBrush(Colors.PaleGreen);
+    //                case WarningLevels.SubvolumeWarningCTVs:
+    //                    return new SolidColorBrush(Colors.Orange);
+    //                case WarningLevels.SubvolumeWarningCTVen:
+    //                    return new SolidColorBrush(Colors.Orange);
+    //                case WarningLevels.SubvolumeWarningGTVn:
+    //                    return new SolidColorBrush(Colors.Tomato);
+    //                case WarningLevels.SubvolumeWarningGTVp:
+    //                    return new SolidColorBrush(Colors.Tomato);
+    //                default:
+    //                    return new SolidColorBrush(Colors.LightGray);
+    //            }
+    //        }
+    //        else
+    //            return new SolidColorBrush(Colors.Transparent);
 
-        }
-        public object ConvertBack(object value, Type targetTypes,
-               object parameter, System.Globalization.CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
-    }
+    //    }
+    //    public object ConvertBack(object value, Type targetTypes,
+    //           object parameter, System.Globalization.CultureInfo culture)
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+    //}
     public class OperatorToTargetVisibility : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
@@ -273,26 +274,26 @@ namespace Optimate.Converters
         }
     }
 
-    public class AddInstructionVisibilityConverter : IMultiValueConverter
-    {
-        public object Convert(object[] value, Type targetType,
-               object parameter, System.Globalization.CultureInfo culture)
-        {
-            OptiMateProtocolOptiStructureInstruction I = value[0] as OptiMateProtocolOptiStructureInstruction;
-            var ProtocolStructure = value[1] as OptiMateProtocolOptiStructure;
-            if (I != null && ProtocolStructure != null)
-            {
-                if (ProtocolStructure.Instruction.ToList().IndexOf(I) == ProtocolStructure.Instruction.Count() - 1)
-                    return Visibility.Visible;
-            }
-            return Visibility.Hidden;
-        }
+    //public class AddInstructionVisibilityConverter : IMultiValueConverter
+    //{
+    //    public object Convert(object[] value, Type targetType,
+    //           object parameter, System.Globalization.CultureInfo culture)
+    //    {
+    //        OptiMateProtocolOptiStructureInstruction I = value[0] as OptiMateProtocolOptiStructureInstruction;
+    //        var ProtocolStructure = value[1] as OptiMateProtocolOptiStructure;
+    //        if (I != null && ProtocolStructure != null)
+    //        {
+    //            if (ProtocolStructure.Instruction.ToList().IndexOf(I) == ProtocolStructure.Instruction.Count() - 1)
+    //                return Visibility.Visible;
+    //        }
+    //        return Visibility.Hidden;
+    //    }
 
-        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
-    }
+    //    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+    //}
     public class AvailableOperators : IMultiValueConverter
     {
         public object Convert(object[] value, Type targetType,
@@ -314,7 +315,7 @@ namespace Optimate.Converters
             }
             else
             {
-                return new ObservableCollection<OperatorType>(){ OperatorType.copy};
+                return new ObservableCollection<OperatorType>() { OperatorType.copy };
             }
         }
 
@@ -517,20 +518,20 @@ namespace Optimate.Converters
         }
     }
 
-    public class Color2Brush : IValueConverter
-    {
-        public object Convert(object value, Type targetType,
-              object parameter, System.Globalization.CultureInfo culture)
-        {
-            if (value != null)
-                return new SolidColorBrush((Color)value);
-            else
-                return new SolidColorBrush(Colors.Transparent);
-        }
+    //public class Color2Brush : IValueConverter
+    //{
+    //    public object Convert(object value, Type targetType,
+    //          object parameter, System.Globalization.CultureInfo culture)
+    //    {
+    //        if (value != null)
+    //            return new SolidColorBrush((Color)value);
+    //        else
+    //            return new SolidColorBrush(Colors.Transparent);
+    //    }
 
-        public object ConvertBack(object value, Type targetTypes, object parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
-    }
+    //    public object ConvertBack(object value, Type targetTypes, object parameter, CultureInfo culture)
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+    //}
 }

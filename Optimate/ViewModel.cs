@@ -472,8 +472,7 @@ namespace Optimate
                         if (ProtocolStructure.Instruction != null)
                             foreach (var I in ProtocolStructure.Instruction)
                             {
-                                OperatorType Op = OperatorType.UNDEFINED;
-                                switch (Op)
+                                switch (I.Operator)
                                 {
                                     case OperatorType.copy:
                                         string BaseStructure_Id = I.Target;
@@ -609,6 +608,9 @@ namespace Optimate
                                             break;
                                         }
                                         OS.SegmentVolume = OS.SegmentVolume.Sub(Target);
+                                        break;
+                                    case OperatorType.convertDose:
+                                        // Not implemented
                                         break;
                                     case OperatorType.margin:
                                         double UniformMargin;
