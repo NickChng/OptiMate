@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Serilog.Core;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
+using Optimate;
 
 namespace Optimate.Converters
 {
@@ -133,7 +135,6 @@ namespace Optimate.Converters
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
             string target = value as string;
-            Helpers.SeriLog.AddLog(string.Format("{0}, {1}, {2}{3}", DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString(), @"TargetStatusString: ", target));
             if (string.IsNullOrEmpty(target))
                 return new SolidColorBrush(Colors.Orange);
             else
@@ -330,9 +331,9 @@ namespace Optimate.Converters
                object parameter, System.Globalization.CultureInfo culture)
         {
             OptiMateProtocolOptiStructureInstruction I = value[0] as OptiMateProtocolOptiStructureInstruction;
-            OptiMateProtocolOptiStructureInstruction[] IList = value[1] as OptiMateProtocolOptiStructureInstruction[];
-            if (I != null && IList != null)
-                return string.Format(@"({0})", ((IList.ToList()).IndexOf(I) + 1));
+            OptiMateProtocolOptiStructureInstruction[] InstructionArray = value[1] as OptiMateProtocolOptiStructureInstruction[];
+            if (I != null && InstructionArray != null)
+                return string.Format(@"({0})", ((InstructionArray.ToList()).IndexOf(I) + 1));
             else
                 return "";
         }
@@ -361,48 +362,59 @@ namespace Optimate.Converters
         public object Convert(object[] value, Type targetType,
                object parameter, System.Globalization.CultureInfo culture)
         {
-            string currentOptiId = (value[0] as string);
-            ObservableCollection<string> Ids = value[1] as ObservableCollection<string>;
-            ObservableCollection<string> AvailableIds = new ObservableCollection<string>(Ids);
-            OptiMateProtocol P = value[2] as OptiMateProtocol;
-            string defaultId = (value[3] as string);
-            if (currentOptiId == null)
+            try
             {
-                return Ids;
+                string currentOptiId = (value[0] as string);
+                ObservableCollection<string> Ids = value[1] as ObservableCollection<string>;
+                ObservableCollection<string> AvailableIds = new ObservableCollection<string>(Ids);
+                OptiMateProtocol P = value[2] as OptiMateProtocol;
+                string defaultId = (value[3] as string);
+                if (currentOptiId == null)
+                {
+                    return Ids;
+                }
+                if (P != null)
+                {
+                    if (P.OptiStructures != null)
+                    {
+                        int Index = P.OptiStructures.Select(x => x.StructureId).ToList().IndexOf(currentOptiId);
+                        if (Index >= 0)
+                        {
+                            foreach (var optiId in P.OptiStructures.Select(x => x.StructureId).ToList().Take(Index))
+                                AvailableIds.Add(optiId);
+                        }
+                    }
+                }
+                if (AvailableIds.Count != 0 && !string.IsNullOrEmpty(defaultId))
+                {
+                    double[] LD = new double[AvailableIds.Count];
+                    for (int i = 0; i < AvailableIds.Count; i++)
+                    {
+                        LD[i] = double.PositiveInfinity;
+                    }
+                    int c = 0;
+                    foreach (string S in AvailableIds)
+                    {
+                        var CurrentId = defaultId.ToUpper();
+                        var stripString = S.Replace(@"B_", @"").Replace(@"_", @"").ToUpper();
+                        var CompString = CurrentId.Replace(@"B_", @"").Replace(@"_", @"").ToUpper();
+                        double LDist = Helpers.LevenshteinDistance.Compute(stripString, CompString);
+                        if (stripString.ToUpper().Contains(CompString) && stripString != "" && CompString != "")
+                            LDist = Math.Min(LDist, 1.5);
+                        LD[c] = LDist;
+                        c++;
+                    }
+                    var temp = new ObservableCollection<string>(AvailableIds.Zip(LD, (s, l) => new { key = s, LD = l }).OrderBy(x => x.LD).Select(x => x.key).ToList());
+                    return temp;
+                }
+                else
+                    return AvailableIds;
             }
-            if (P != null)
+            catch (Exception ex)
             {
-                int Index = P.OptiStructures.Select(x => x.StructureId).ToList().IndexOf(currentOptiId);
-                if (Index >= 0)
-                {
-                    foreach (var optiId in P.OptiStructures.Select(x => x.StructureId).ToList().Take(Index))
-                        AvailableIds.Add(optiId);
-                }
+                Helpers.SeriLog.AddError("Error in AvailableStructureConverter", ex);
+                return null;
             }
-            if (AvailableIds.Count != 0 && !string.IsNullOrEmpty(defaultId))
-            {
-                double[] LD = new double[AvailableIds.Count];
-                for (int i = 0; i < AvailableIds.Count; i++)
-                {
-                    LD[i] = double.PositiveInfinity;
-                }
-                int c = 0;
-                foreach (string S in AvailableIds)
-                {
-                    var CurrentId = defaultId.ToUpper();
-                    var stripString = S.Replace(@"B_", @"").Replace(@"_", @"").ToUpper();
-                    var CompString = CurrentId.Replace(@"B_", @"").Replace(@"_", @"").ToUpper();
-                    double LDist = Helpers.LevenshteinDistance.Compute(stripString, CompString);
-                    if (stripString.ToUpper().Contains(CompString) && stripString != "" && CompString != "")
-                        LDist = Math.Min(LDist, 1.5);
-                    LD[c] = LDist;
-                    c++;
-                }
-                var temp = new ObservableCollection<string>(AvailableIds.Zip(LD, (s, l) => new { key = s, LD = l }).OrderBy(x => x.LD).Select(x => x.key).ToList());
-                return temp;
-            }
-            else
-                return AvailableIds;
         }
 
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)

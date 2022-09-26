@@ -13,11 +13,9 @@ namespace Optimate
 {
     public class EsapiWorker 
     {
-        private readonly PlanSetup _pl;
-        private readonly StructureSet _ss;
-        private readonly Patient _p;
-        private readonly Application _app;
-        private readonly Dispatcher _dispatcher;
+        private readonly StructureSet _ss = null;
+        private readonly Patient _p = null;
+        private readonly Dispatcher _dispatcher = null;
         
         public EsapiWorker(Patient p, StructureSet ss)
         {
@@ -30,8 +28,6 @@ namespace Optimate
         public async Task<bool> AsyncRunStructureContext(Action<Patient, StructureSet, Dispatcher> a)
         {
             await _dispatcher.BeginInvoke(a, _p, _ss, _dispatcher);
-            //var D = new SendOrPostCallback(_ => a(_p, _ss));
-            //_context.Send(D, null);
             return true;
         }
    }

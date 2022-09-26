@@ -59,7 +59,7 @@ namespace Optimate
         public bool UseTest { get; set; } = true;
 
        
-        private SolidColorBrush ErrorColour = new SolidColorBrush(Colors.Orange);
+        //private SolidColorBrush ErrorColour = new SolidColorBrush(Colors.Orange);
 
         private SolidColorBrush WarningColour = new SolidColorBrush(Colors.Goldenrod);
         public SometimesObservableCollection<OptiMateProtocolOptiStructure> ProtocolStructures { get; set; } = new SometimesObservableCollection<OptiMateProtocolOptiStructure>();
@@ -138,7 +138,32 @@ namespace Optimate
                     return Visibility.Collapsed;
             }
         }
-        public bool Working { get; set; } = false;
+        private bool _working;
+        public bool Working
+        {
+            get
+            {
+                return _working;
+            }
+            set
+            {
+                _working = value;
+                RaisePropertyChangedEvent(nameof(allInputsValid));
+                RaisePropertyChangedEvent(nameof(StartButtonText));
+            }
+        }
+
+        public string StartButtonText
+        {
+            get
+            {
+                if (_working)
+                    return "Please wait...";
+                else
+                    return "Generate structures";
+            }
+        }
+
         public bool ScriptDone { get; set; } = false;
         public string StatusMessage { get; set; } = @"Done";
 
@@ -149,6 +174,8 @@ namespace Optimate
         {
             get
             {
+                if (Working)
+                    return false;
                 if (ActiveProtocol != null)
                 {
                     foreach (var PS in ProtocolStructures)
@@ -181,14 +208,23 @@ namespace Optimate
 
         public ViewModel()
         {
-
+            // These values only instantiated for XAML Design
+            var DummyInstructions = new List<OptiMateProtocolOptiStructureInstruction>()
+            {
+                new OptiMateProtocolOptiStructureInstruction() { Operator = OperatorType.copy, DefaultTarget = "Design", Target="Default" },
+                new OptiMateProtocolOptiStructureInstruction() { Operator = OperatorType.and, DefaultTarget = "Design", Target="Default" },
+            };
+            var DummyStructure = new OptiMateProtocolOptiStructure() { StructureId = "StructureId", BaseStructure = "BaseStructure", Type = @"CONTROL" };
+            ActiveProtocol = new OptiMateProtocol() { OptiStructures = new OptiMateProtocolOptiStructure[] {DummyStructure, DummyStructure}, ProtocolDisplayName="Design", version=1};
+            ProtocolStructures = new SometimesObservableCollection<OptiMateProtocolOptiStructure>() { DummyStructure, DummyStructure };
         }
         public EsapiWorker ew = null;
 
         public ViewModel(EsapiWorker _ew = null)
         {
-            ew = _ew;
             Initialize();
+            ew = _ew;
+           
         }
 
         private void InitializeProtocol(ProtocolPointer value)
@@ -207,9 +243,8 @@ namespace Optimate
                 }
                 catch (Exception ex)
                 {
-                    Helpers.SeriLog.AddLog(string.Format("Unable to read protocol file: {0}\r\n\r\nDetails: {1}", value.ProtocolPath, ex.InnerException));
-                    MessageBox.Show(string.Format("Unable to read protocol file {0}\r\n\r\nDetails: {1}", value.ProtocolPath, ex.InnerException));
-
+                    Helpers.SeriLog.AddError(string.Format("Unable to read protocol file: {0}", value.ProtocolPath, ex));
+                    MessageBox.Show(string.Format("Unable to read/interpret protocol file {0}, see log for details.", value.ProtocolPath));
                 }
                 if (ActiveProtocol != null)
                 {
@@ -225,7 +260,7 @@ namespace Optimate
                         }
                     }
                 }
-                Helpers.SeriLog.AddLog("Protocol changed");
+                Helpers.SeriLog.AddLog(string.Format(@"Protocol [{0}] selected", ActiveProtocol.ProtocolDisplayName));
                 if (ActiveProtocol != null)
                 {
                     Helpers.SeriLog.AddLog("Structures cleared");
@@ -399,7 +434,7 @@ namespace Optimate
             var newInstruction = new OptiMateProtocolOptiStructureInstruction() { Operator = OperatorType.copy };
             newInstruction.PropertyChanged += ValidateControls;
             List<OptiMateProtocolOptiStructureInstruction> Instructions = new List<OptiMateProtocolOptiStructureInstruction>() { newInstruction };
-            var OS = new OptiMateProtocolOptiStructure() { isNew = true, Instruction = Instructions.ToArray() };
+            var OS = new OptiMateProtocolOptiStructure() { isNew = true, Instruction = Instructions.ToArray(), Type = DICOMTypes.CONTROL.ToString() };
             OS.PropertyChanged += ValidateControls;
             ProtocolStructures.Add(OS);
             newInstruction.StartDataValidationNotifications();
@@ -756,15 +791,18 @@ namespace Optimate
                                     S.RemoveStructure(TemOStructure);
 
                             }
+                        Helpers.SeriLog.AddLog(string.Format("@Created opti structure: {0}", ProtocolStructure.StructureId));
+                        newstructures.Add(ProtocolStructure.StructureId);
+                        ui.Invoke(() => WaitMessage = string.Format("{0} created... ({1}/{2})", ProtocolStructure.StructureId, numCompleted, numStructures));
+                        throw new Exception("test", new Exception("inner message"));
                     }
                     catch (Exception ex)
                     {
+                        Helpers.SeriLog.AddError(string.Format("Error creating structure {0}", ProtocolStructure.StructureId), ex);
                         MessageBox.Show(string.Format("{0}\r\n{1}\r\n{2}", ex.Message, ex.InnerException, ex.StackTrace));
+                        ui.Invoke(() => WaitMessage = string.Format("{0} experienced error... ({1}/{2})", ProtocolStructure.StructureId, numCompleted, numStructures));
                     }
-                    Helpers.SeriLog.AddLog(string.Format("{0}, {1}, {2}{3}", DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString(), @"Created opti structure: ", ProtocolStructure.StructureId));
-                    newstructures.Add(ProtocolStructure.StructureId);
                     numCompleted++;
-                    ui.Invoke(() => WaitMessage = string.Format("{0} created... ({1}/{2})", ProtocolStructure.StructureId, numCompleted, numStructures));
                 }
             }
             ));

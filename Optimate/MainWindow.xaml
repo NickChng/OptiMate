@@ -9,8 +9,9 @@
         xmlns:converters="clr-namespace:Optimate.Converters"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="OptiMate (v1.1)" Height="750" Width="1050" ResizeMode="NoResize"
-    xmlns:theme="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero2">
+        d:DataContext="{d:DesignInstance Type=local:ViewModel, IsDesignTimeCreatable=True}"
+        Title="NoPAUSE OptiMate (v1.2)" Height="750" Width="1050" ResizeMode="NoResize"
+        xmlns:theme="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero2">
     <Window.Resources>
         <converters:isMarginInternal x:Key="isMarginInternal"/>
         <converters:AvailableOperators x:Key="AvailableOperators"/>
@@ -780,9 +781,6 @@
             </ControlTemplate.Triggers>
         </ControlTemplate>
     </Window.Resources>
-    <Window.DataContext>
-        <local:ViewModel/>
-    </Window.DataContext>
     <Grid KeyDown="KeyDown">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -914,9 +912,9 @@
                                                 <Grid Grid.Row="1" Margin="10,-10,0,0">
                                                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center">
                                                         <StackPanel Orientation="Horizontal">
-                                                            <TextBlock Text="{Binding StructureId}" HorizontalAlignment="Center" FontWeight="bold" FontSize="14" VerticalAlignment="Bottom" Margin="5,0,0,0"
+                                                            <TextBlock Text="{Binding StructureId}" HorizontalAlignment="Center" FontWeight="bold" FontSize="14" VerticalAlignment="Bottom" Margin="5,0,0,0" 
                                                        Visibility="{Binding isNew, Converter={StaticResource VisibilityInverseConverter}}"/>
-                                                            <TextBox Text="{Binding StructureId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="1,1,1,1" HorizontalAlignment="Center" FontWeight="bold" FontSize="14" VerticalAlignment="Bottom" MinWidth="100" MaxWidth="150"
+                                                            <TextBox Text="{Binding StructureId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="1,1,1,1" HorizontalAlignment="Center" FontWeight="bold" FontSize="14" VerticalAlignment="Bottom" MinWidth="100" MaxWidth="130"
                                                        Visibility="{Binding isNew, Converter={StaticResource VisibilityConverter}}" Background="{Binding StructureIdColor, UpdateSourceTrigger=PropertyChanged,FallbackValue=Orange}"
                                                                        ToolTip="{Binding structureIdError, UpdateSourceTrigger=PropertyChanged}"/>
                                                         </StackPanel>
@@ -952,11 +950,11 @@
                                                                     <ColumnDefinition Width="Auto"/>
                                                                     <ColumnDefinition Width="Auto"/>
                                                                 </Grid.ColumnDefinitions>
-                                                                <TextBlock Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                <TextBlock Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-3,0,0" ToolTip="Instructions execute in this order">
                                                                     <TextBlock.Text>
                                                                         <MultiBinding Converter="{StaticResource InstructionNumberConverter}">
                                                                             <Binding/>
-                                                                            <Binding Path="DataContext.ProtocolStructure.Instruction">
+                                                                            <Binding Path="DataContext.Instruction">
                                                                                 <Binding.RelativeSource>
                                                                                     <RelativeSource Mode="FindAncestor" AncestorType="ListView" />
                                                                                 </Binding.RelativeSource>
@@ -1145,7 +1143,7 @@
                 <Button HorizontalAlignment="Center" Style="{StaticResource ButtonStyle_Highlight}" Width="175" Command="{Binding StartCommand}" 
                         Visibility="{Binding IsErrorAcknowledged, Converter={StaticResource VisibilityConverter},UpdateSourceTrigger=PropertyChanged}"
                             IsEnabled="{Binding allInputsValid, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Margin="2,1,2,1">
-                    <TextBlock Text="Generate Structures" FontSize="16" FontWeight="bold"/>
+                    <TextBlock Text="{Binding StartButtonText, UpdateSourceTrigger=PropertyChanged}" FontSize="16" FontWeight="bold"/>
                 </Button>
                 <!--</Border>-->
                 <Button HorizontalAlignment="Center"  Style="{DynamicResource ButtonStyle_Highlight}" Margin="2,1,2,1" Width="175" Command="{Binding ContinueCommand}" Visibility="{Binding IsErrorAcknowledged, Converter={StaticResource VisibilityInverseConverter},UpdateSourceTrigger=PropertyChanged}">

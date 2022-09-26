@@ -17,35 +17,6 @@ namespace Optimate
 
     public static class Helpers
     {
-        public static class Logger
-        {
-
-            private static DateTime SessionTimeStart;
-
-            private static string directory = "";
-
-            private static string logpath = "";
-
-            public static string user = "";
-
-            private static void Initialize()
-            {
-                SessionTimeStart = DateTime.Now;
-                var AssemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                directory = Path.Combine(AssemblyPath, @"Logs");
-                logpath = Path.Combine(directory, string.Format(@"log_{0}_{1}_{2}.txt", SessionTimeStart.ToString("dd-MMM-yyyy"), SessionTimeStart.ToString("hh-mm-ss"), user.Replace(@"\", @"_")));
-            }
-            public static void AddLog(string log_entry)
-            {
-                Initialize();
-                using (var data = new StreamWriter(logpath, true))
-                {
-                    data.WriteLine(log_entry);
-                }
-            }
-
-        }
-
         public static class SeriLog
         {
             public static void Initialize(string user = "RunFromLauncher")
@@ -54,7 +25,8 @@ namespace Optimate
                 var AssemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                 var directory = Path.Combine(AssemblyPath, @"Logs");
                 var logpath = Path.Combine(directory, string.Format(@"log_{0}_{1}_{2}.txt", SessionTimeStart.ToString("dd-MMM-yyyy"), SessionTimeStart.ToString("hh-mm-ss"), user.Replace(@"\", @"_")));
-                Log.Logger = new LoggerConfiguration().WriteTo.File(logpath).CreateLogger();
+                Log.Logger = new LoggerConfiguration().WriteTo.File(logpath, Serilog.Events.LogEventLevel.Information,
+                    "{Timestamp:dd-MMM-yyy HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}").CreateLogger();
             }
             public static void AddLog(string log_info)
             {
@@ -70,11 +42,11 @@ namespace Optimate
                 if (ex == null)
                     Log.Error(log_info);
                 else
-                    Log.Error(log_info, ex);
+                    Log.Error(ex, log_info);
             }
             public static void AddFatal(string log_info, Exception ex)
             {
-                Log.Fatal(log_info, ex);
+                Log.Fatal(ex, log_info);
             }
         }
         public static class LevenshteinDistance

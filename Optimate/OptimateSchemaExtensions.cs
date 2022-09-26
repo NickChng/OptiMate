@@ -39,7 +39,13 @@ namespace Optimate
         {
             ClearErrors(nameof(StructureId));
             if (string.IsNullOrEmpty(StructureId))
-                AddError(nameof(StructureId), @"Value out of range");
+            {
+                AddError(nameof(StructureId), @"Structure Id is required");
+            }
+            else if (Char.IsDigit(StructureId.First()))
+                AddError(nameof(StructureId), @"Structure Id cannot start with digit");
+            else if (StructureId.Length > 16)
+                AddError(nameof(StructureId), @"Structure Id must be less than 16 characters");
             RaisePropertyChangedEvent(nameof(StructureIdColor));
             RaisePropertyChangedEvent(nameof(structureIdError));
         }
@@ -105,7 +111,6 @@ namespace Optimate
                 case nameof(OperatorParameter2):
                     {
                         ValidateOperatorParameter2();
-
                     }
                     break;
                 case nameof(OperatorParameter3):
