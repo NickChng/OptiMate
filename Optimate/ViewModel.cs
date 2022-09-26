@@ -122,14 +122,7 @@ namespace Optimate
                     return new SolidColorBrush(Colors.Orange);
             }
         }
-        private void ValidateInstruction(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            RaisePropertyChangedEvent(nameof(allInputsValid));
-            RaisePropertyChangedEvent(nameof(StartButtonColor));
-            RaisePropertyChangedEvent(nameof(StartButtonTooltip));
-        }
-
-        private void ValidateStructure(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        private void ValidateControls(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             RaisePropertyChangedEvent(nameof(allInputsValid));
             RaisePropertyChangedEvent(nameof(StartButtonColor));
@@ -214,7 +207,7 @@ namespace Optimate
                 }
                 catch (Exception ex)
                 {
-                    Helpers.Logger.AddLog(string.Format("Unable to read protocol file: {0}\r\n\r\nDetails: {1}", value.ProtocolPath, ex.InnerException));
+                    Helpers.SeriLog.AddLog(string.Format("Unable to read protocol file: {0}\r\n\r\nDetails: {1}", value.ProtocolPath, ex.InnerException));
                     MessageBox.Show(string.Format("Unable to read protocol file {0}\r\n\r\nDetails: {1}", value.ProtocolPath, ex.InnerException));
 
                 }
@@ -223,22 +216,22 @@ namespace Optimate
                     // Unsubscribe
                     foreach (var OS in ProtocolStructures)
                     {
-                        OS.PropertyChanged -= ValidateStructure;
+                        OS.PropertyChanged -= ValidateControls;
                         OS.StopDataValidationNotifications();
                         foreach (var I in OS.Instruction)
                         {
-                            I.PropertyChanged -= ValidateInstruction;
+                            I.PropertyChanged -= ValidateControls;
                             I.StopDataValidationNotifications();
                         }
                     }
                 }
-                Helpers.Logger.AddLog("Protocol changed");
+                Helpers.SeriLog.AddLog("Protocol changed");
                 if (ActiveProtocol != null)
                 {
-                    Helpers.Logger.AddLog("Structures cleared");
+                    Helpers.SeriLog.AddLog("Structures cleared");
                     foreach (var ProtocolStructure in ActiveProtocol.OptiStructures)
                     {
-                        ProtocolStructure.PropertyChanged += ValidateStructure;
+                        ProtocolStructure.PropertyChanged += ValidateControls;
                         ProtocolStructure.StartDataValidationNotifications();
                         newStructures.Add(ProtocolStructure);
                         List<OptiMateProtocolOptiStructureInstruction> UpdatedInstructions = new List<OptiMateProtocolOptiStructureInstruction>();
@@ -248,7 +241,7 @@ namespace Optimate
                         ProtocolStructure.Instruction = UpdatedInstructions.ToArray(); // Add copy instruction 
                         foreach (var I in ProtocolStructure.Instruction)
                         {
-                            I.PropertyChanged += ValidateInstruction;
+                            I.PropertyChanged += ValidateControls;
                             I.StartDataValidationNotifications();
                             List<string> AvailableIds = new List<string>(EclipseIds);
                             int Index = ActiveProtocol.OptiStructures.Select(x => x.StructureId).ToList().IndexOf(ProtocolStructure.StructureId);
@@ -267,7 +260,7 @@ namespace Optimate
 
                 }
                 else
-                    Helpers.Logger.AddLog("Null protocol selected");
+                    Helpers.SeriLog.AddLog("Null protocol selected");
             }
             else
                 ActiveProtocol = null;
@@ -302,7 +295,7 @@ namespace Optimate
             }
             catch (Exception ex)
             {
-                Helpers.Logger.AddLog(string.Format("{0}\r\n{1}\r\n{2}", ex.Message, ex.InnerException, ex.StackTrace));
+                Helpers.SeriLog.AddLog(string.Format("{0}\r\n{1}\r\n{2}", ex.Message, ex.InnerException, ex.StackTrace));
                 MessageBox.Show(string.Format("{0}\r\n{1}\r\n{2}", ex.Message, ex.InnerException, ex.StackTrace));
             }
         }
@@ -392,7 +385,7 @@ namespace Optimate
                 {
                     var newInstructions = OS.Instruction.ToList();
                     var newI = new OptiMateProtocolOptiStructureInstruction() { Operator = OperatorType.crop };
-                    newI.PropertyChanged += ValidateInstruction;
+                    newI.PropertyChanged += ValidateControls;
                     newInstructions.Insert(newInstructions.IndexOf(I) + 1, newI);
                     OS.Instruction = newInstructions.ToArray();
                     newI.StartDataValidationNotifications();
@@ -404,10 +397,10 @@ namespace Optimate
         public void AddStructure(object param = null)
         {
             var newInstruction = new OptiMateProtocolOptiStructureInstruction() { Operator = OperatorType.copy };
-            newInstruction.PropertyChanged += ValidateInstruction;
+            newInstruction.PropertyChanged += ValidateControls;
             List<OptiMateProtocolOptiStructureInstruction> Instructions = new List<OptiMateProtocolOptiStructureInstruction>() { newInstruction };
             var OS = new OptiMateProtocolOptiStructure() { isNew = true, Instruction = Instructions.ToArray() };
-            OS.PropertyChanged += ValidateStructure;
+            OS.PropertyChanged += ValidateControls;
             ProtocolStructures.Add(OS);
             newInstruction.StartDataValidationNotifications();
             OS.StartDataValidationNotifications();
@@ -423,7 +416,7 @@ namespace Optimate
                 List<OptiMateProtocolOptiStructureInstruction> UpdatedInstructions = new List<OptiMateProtocolOptiStructureInstruction>();
                 if (I != null && ProtocolStructure != null)
                 {
-                    I.PropertyChanged -= ValidateInstruction;
+                    I.PropertyChanged -= ValidateControls;
                     I.StopDataValidationNotifications();
                     ProtocolStructure.SuppressNotification = true;
                     foreach (var i in ProtocolStructure.Instruction)
@@ -442,10 +435,10 @@ namespace Optimate
             OptiMateProtocolOptiStructure ProtocolStructure = param as OptiMateProtocolOptiStructure;
             if (ProtocolStructure != null)
             {
-                ProtocolStructure.PropertyChanged -= ValidateStructure;
+                ProtocolStructure.PropertyChanged -= ValidateControls;
                 if (ProtocolStructures.Contains(ProtocolStructure))
                     ProtocolStructures.Remove(ProtocolStructure);
-                //ValidateInstruction(null, new PropertyChangedEventArgs(nameof(AddInstruction)));
+                //ValidateControls(null, new PropertyChangedEventArgs(nameof(AddInstruction)));
             }
         }
 
@@ -768,7 +761,7 @@ namespace Optimate
                     {
                         MessageBox.Show(string.Format("{0}\r\n{1}\r\n{2}", ex.Message, ex.InnerException, ex.StackTrace));
                     }
-                    Helpers.Logger.AddLog(string.Format("{0}, {1}, {2}{3}", DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString(), @"Created opti structure: ", ProtocolStructure.StructureId));
+                    Helpers.SeriLog.AddLog(string.Format("{0}, {1}, {2}{3}", DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString(), @"Created opti structure: ", ProtocolStructure.StructureId));
                     newstructures.Add(ProtocolStructure.StructureId);
                     numCompleted++;
                     ui.Invoke(() => WaitMessage = string.Format("{0} created... ({1}/{2})", ProtocolStructure.StructureId, numCompleted, numStructures));
@@ -798,7 +791,7 @@ namespace Optimate
 
         private bool PauseTillErrorAcknowledged(Dispatcher ui, string warning)
         {
-            Helpers.Logger.AddLog(warning);
+            Helpers.SeriLog.AddLog(warning);
             ui.Invoke(() =>
             {
                 Working = false;
@@ -815,7 +808,7 @@ namespace Optimate
                 Working = true;
                 ScriptDone = false;
             });
-            Helpers.Logger.AddLog(@"Warning acknowledged");
+            Helpers.SeriLog.AddLog(@"Warning acknowledged");
             return true;
         }
 
@@ -827,7 +820,7 @@ namespace Optimate
             var TargetStructure = S.Structures.FirstOrDefault(x => x.Id.ToUpper() == TargetId.ToUpper());
             if (TargetStructure == null)
             {
-                Helpers.Logger.AddLog(string.Format("Opti structure ({0}) creation operation instruction references target {1} which was not found", ProtocolStructure.StructureId, TargetId));
+                Helpers.SeriLog.AddLog(string.Format("Opti structure ({0}) creation operation instruction references target {1} which was not found", ProtocolStructure.StructureId, TargetId));
                 return null;
             }
             else
@@ -883,7 +876,7 @@ namespace Optimate
                         }
                         catch (Exception ex)
                         {
-                            Helpers.Logger.AddLog(string.Format("Unable to read protocol file: {0}\r\n\r\nDetails: {1}", file, ex.InnerException));
+                            Helpers.SeriLog.AddLog(string.Format("Unable to read protocol file: {0}\r\n\r\nDetails: {1}", file, ex.InnerException));
                             MessageBox.Show(string.Format("Unable to read protocol file {0}\r\n\r\nDetails: {1}", file, ex.InnerException));
 
                         }

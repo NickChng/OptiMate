@@ -41,7 +41,7 @@ namespace Optimate
             // I recommend you design your script so that you don't do any work in the Execute method, or any method which uses the "ScriptContext" class directly, as this class isn't available in a standalone application.  
             // Instead, have Execute call a method that takes elements you can get from either the standalone or scriptcontext (like Patient and PlanSetup) so you can call (and debug) it from the standalone PluginTester without having to make any changes
             // to the Script class itself.
-            Helpers.Logger.user = context.CurrentUser.Id;
+            Helpers.SeriLog.Initialize(context.CurrentUser.Id);
             // The ESAPI worker needs to be created in the main thread
             var esapiWorker = new EsapiWorker(context.Patient, context.StructureSet);
 

@@ -9,6 +9,8 @@ using VMS.TPS.Common.Model.API;
 using VMS.TPS.Common.Model.Types;
 using System.Reflection;
 using System.ComponentModel;
+using Serilog;
+
 
 namespace Optimate
 {
@@ -28,7 +30,7 @@ namespace Optimate
 
             private static void Initialize()
             {
-                SessionTimeStart = DateTime.Now; 
+                SessionTimeStart = DateTime.Now;
                 var AssemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                 directory = Path.Combine(AssemblyPath, @"Logs");
                 logpath = Path.Combine(directory, string.Format(@"log_{0}_{1}_{2}.txt", SessionTimeStart.ToString("dd-MMM-yyyy"), SessionTimeStart.ToString("hh-mm-ss"), user.Replace(@"\", @"_")));
@@ -41,7 +43,39 @@ namespace Optimate
                     data.WriteLine(log_entry);
                 }
             }
-            
+
+        }
+
+        public static class SeriLog
+        {
+            public static void Initialize(string user = "RunFromLauncher")
+            {
+                var SessionTimeStart = DateTime.Now;
+                var AssemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                var directory = Path.Combine(AssemblyPath, @"Logs");
+                var logpath = Path.Combine(directory, string.Format(@"log_{0}_{1}_{2}.txt", SessionTimeStart.ToString("dd-MMM-yyyy"), SessionTimeStart.ToString("hh-mm-ss"), user.Replace(@"\", @"_")));
+                Log.Logger = new LoggerConfiguration().WriteTo.File(logpath).CreateLogger();
+            }
+            public static void AddLog(string log_info)
+            {
+                Log.Information(log_info);
+
+            }
+            public static void AddWarning(string log_info)
+            {
+                Log.Warning(log_info);
+            }
+            public static void AddError(string log_info, Exception ex = null)
+            {
+                if (ex == null)
+                    Log.Error(log_info);
+                else
+                    Log.Error(log_info, ex);
+            }
+            public static void AddFatal(string log_info, Exception ex)
+            {
+                Log.Fatal(log_info, ex);
+            }
         }
         public static class LevenshteinDistance
         {

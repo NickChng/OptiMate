@@ -133,7 +133,7 @@ namespace Optimate.Converters
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
             string target = value as string;
-            Helpers.Logger.AddLog(string.Format("{0}, {1}, {2}{3}", DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString(), @"TargetStatusString: ", target));
+            Helpers.SeriLog.AddLog(string.Format("{0}, {1}, {2}{3}", DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString(), @"TargetStatusString: ", target));
             if (string.IsNullOrEmpty(target))
                 return new SolidColorBrush(Colors.Orange);
             else
