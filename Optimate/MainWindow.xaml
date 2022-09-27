@@ -637,6 +637,29 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style x:Key="ButtonStyle_Fit" TargetType="Button">
+            <Setter Property="BorderBrush" Value="CornflowerBlue"/>
+            <Setter Property="Background" Value="PapayaWhip"/>
+            <Setter Property="Padding" Value="0,0,0,0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+            <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Name="border" BorderThickness="1" Padding="3,2" BorderBrush="Transparent" CornerRadius="5" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="CornFlowerBlue" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style x:Key="ButtonStyle_Highlight" TargetType="Button">
             <Setter Property="BorderBrush" Value="Orange"/>
             <Setter Property="Background" Value="FloralWhite"/>
@@ -1126,7 +1149,10 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <Grid Grid.Column="0">
-                <ProgressBar Height="30" Margin="30,0,30,0" HorizontalAlignment="Stretch" Template="{StaticResource ProgressBarNC}" IsIndeterminate="True" 
+                <Popup Visibility="Visible" PlacementTarget="{Binding ElementName=ProgressBar}" StaysOpen="False" Placement="Top" HorizontalOffset="200" AllowsTransparency="True" IsOpen="{Binding ReviewWarningsPopupVisibility, UpdateSourceTrigger=PropertyChanged}">
+                    <local:ReviewWarningsPopup MinHeight="35" Height="Auto" DataContext="{Binding ReviewWarningsVM}"/>
+                </Popup>
+                <ProgressBar Name="ProgressBar" Height="30" Margin="30,0,30,0" HorizontalAlignment="Stretch" Template="{StaticResource ProgressBarNC}" IsIndeterminate="True" 
                 Visibility="{Binding Working,UpdateSourceTrigger=PropertyChanged, Converter={StaticResource VisibilityConverter}}" />
                 <TextBlock Text="{Binding WaitMessage, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" HorizontalAlignment="Center" 
                            Visibility="{Binding Working,UpdateSourceTrigger=PropertyChanged, Converter={StaticResource VisibilityConverter}}" />
@@ -1134,8 +1160,10 @@
                             HorizontalAlignment="Stretch"
                             ToolTip="{Binding WarningDetails, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                             BorderBrush="{Binding ScriptCompletionStatusColour}" Grid.ColumnSpan="3" BorderThickness="3">
-                    <TextBlock Text="{Binding StatusMessage, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Background="Transparent"
+                    <Button Command="{Binding ToggleWarningVisibilityCommand}" Background="Transparent" Style="{StaticResource ButtonStyle_Fit}">
+                        <TextBlock Text="{Binding StatusMessage, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Background="Transparent"
                                    Foreground="Black"  FontSize="13" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </Button> 
                 </Border>
             </Grid>
             <Grid Grid.Column="1" ToolTip="{Binding StartButtonTooltip}">
@@ -1150,7 +1178,9 @@
                     <TextBlock Text="Continue" FontSize="16" FontWeight="bold"/>
                 </Button>
             </Grid>
-
+            <!--<Popup Name="SaveSessionsPopup" PlacementTarget="{Binding ElementName=SaveSessionButton}" Placement="Left" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade"  IsOpen="{Binding SessionSaveVisibility, UpdateSourceTrigger=PropertyChanged}" >
+                <Views:SavePopup DataContext="{Binding ElementName=SquintWindow}" MinHeight="35" Height="Auto"/>
+            </Popup>-->
 
         </Grid>
     </Grid>

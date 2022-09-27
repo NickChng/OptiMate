@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -10,6 +11,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -58,13 +60,13 @@ namespace Optimate
         public bool CanLoadTemplates { get; set; } = true;
         public bool UseTest { get; set; } = true;
 
-       
-        //private SolidColorBrush ErrorColour = new SolidColorBrush(Colors.Orange);
+
+        private List<string> _warnings = new List<string>();
 
         private SolidColorBrush WarningColour = new SolidColorBrush(Colors.Goldenrod);
         public SometimesObservableCollection<OptiMateProtocolOptiStructure> ProtocolStructures { get; set; } = new SometimesObservableCollection<OptiMateProtocolOptiStructure>();
 
-        public SometimesObservableCollection<OperatorType> Operators { get; set; } = new SometimesObservableCollection<OperatorType>() { OperatorType.copy, OperatorType.margin, OperatorType.or, OperatorType.and, OperatorType.crop, OperatorType.sub, OperatorType.subfrom};
+        public SometimesObservableCollection<OperatorType> Operators { get; set; } = new SometimesObservableCollection<OperatorType>() { OperatorType.copy, OperatorType.margin, OperatorType.or, OperatorType.and, OperatorType.crop, OperatorType.sub, OperatorType.subfrom };
 
         public ObservableCollection<string> EclipseIds { get; set; } = new ObservableCollection<string>();
         public SometimesObservableCollection<ProtocolPointer> Protocols { get; set; } = new SometimesObservableCollection<ProtocolPointer>();
@@ -206,6 +208,9 @@ namespace Optimate
 
         public SolidColorBrush ScriptCompletionStatusColour { get; set; } = new SolidColorBrush(Colors.PaleGreen);
 
+        public ReviewWarningsViewModel ReviewWarningsVM { get; set; } = new ReviewWarningsViewModel();
+
+        public bool ReviewWarningsPopupVisibility { get; set; } = false;
         public ViewModel()
         {
             // These values only instantiated for XAML Design
@@ -222,9 +227,8 @@ namespace Optimate
 
         public ViewModel(EsapiWorker _ew = null)
         {
-            Initialize();
             ew = _ew;
-           
+            Initialize();
         }
 
         private void InitializeProtocol(ProtocolPointer value)
@@ -348,6 +352,18 @@ namespace Optimate
             }
         }
 
+        public ICommand ToggleWarningVisibilityCommand
+        {
+            get
+            {
+                return new DelegateCommand(ToggleWarningVisibility);
+            }
+        }
+
+        public void ToggleWarningVisibility(object param = null)
+        {
+            ReviewWarningsPopupVisibility ^= true;
+        }
         public ICommand OpenTemplateFolderCommand
         {
             get
@@ -486,6 +502,7 @@ namespace Optimate
             CanLoadTemplates = false;
             Working = true;
             ScriptDone = false;
+            _warnings.Clear();
             bool Errors = false;
             var newstructures = new List<string>();
             bool Done = await Task.Run(() => ew.AsyncRunStructureContext((p, S, ui) =>
@@ -497,9 +514,12 @@ namespace Optimate
                     Structure OS = null;
                     try
                     {
+                        bool abortStructure = false;
                         if (ProtocolStructure.Instruction != null)
                             foreach (var I in ProtocolStructure.Instruction)
                             {
+                                if (abortStructure)
+                                    break;
                                 switch (I.Operator)
                                 {
                                     case OperatorType.copy:
@@ -509,8 +529,9 @@ namespace Optimate
                                             ui.Invoke(() =>
                                             {
                                                 Errors = true;
-                                                var warning = string.Format("Copy structure for {0} is not defined, skipping structure...", ProtocolStructure.StructureId);
-                                                PauseTillErrorAcknowledged(ui, warning);
+                                                var warning = string.Format("Copy target for structure {0} is null, skipping structure...", ProtocolStructure.StructureId);
+                                                _warnings.Add(warning);
+                                                //PauseTillErrorAcknowledged(ui, warning);
                                             });
                                             continue;
                                         }
@@ -520,10 +541,22 @@ namespace Optimate
                                             ui.Invoke(() =>
                                             {
                                                 Errors = true;
-                                                var warning = string.Format("Copy structure for {0} does not exist, skipping structure...", ProtocolStructure.StructureId);
-                                                PauseTillErrorAcknowledged(ui, warning);
+                                                var warning = string.Format("Attempt to create structure {1} failed as copy target {0} does not exist in structure set, skipping structure...", I.Target, ProtocolStructure.StructureId);
+                                                _warnings.Add(warning);
+                                                //PauseTillErrorAcknowledged(ui, warning);
                                             });
-                                            continue;
+                                            abortStructure = true;
+                                        }
+                                        else if (BaseStructure.IsEmpty)
+                                        {
+                                            ui.Invoke(() =>
+                                            {
+                                                Errors = true;
+                                                var warning = string.Format("Attempt to create structure {1} failed as copy target {0} is empty, skipping structure...", I.Target, ProtocolStructure.StructureId);
+                                                _warnings.Add(warning);
+                                                //PauseTillErrorAcknowledged(ui, warning);
+                                            });
+                                            abortStructure = true;
                                         }
                                         else
                                         {
@@ -583,10 +616,18 @@ namespace Optimate
                                             ui.Invoke(() =>
                                             {
                                                 Errors = true;
-                                                var warning = string.Format("Crop target for {0} is invalid, crop aborted...", ProtocolStructure.StructureId);
-                                                PauseTillErrorAcknowledged(ui, warning);
+                                                var warning = string.Format("Target of CROP operation [{0}] for structure {1} is null/empty, skipping instruction...", I.Target, ProtocolStructure.StructureId);
+                                                _warnings.Add(warning);
+                                                //PauseTillErrorAcknowledged(ui, warning);
                                             });
                                             break;
+                                        }
+                                        else if (Target.IsEmpty)
+                                        {
+                                            Errors = true;
+                                            var warning = string.Format("Target of CROP operation [{0}] for structure {1} is empty, skipping instruction...", I.Target, ProtocolStructure.StructureId);
+                                            _warnings.Add(warning);
+                                            //PauseTillErrorAcknowledged(ui, warning);
                                         }
                                         double cropParameter = 0;
                                         if (!string.IsNullOrEmpty(I.OperatorParameter))
@@ -596,8 +637,9 @@ namespace Optimate
                                                 ui.Invoke(() =>
                                                 {
                                                     Errors = true;
-                                                    var warning = string.Format("Crop margin for {0} is invalid, defaulting to no additional margin...", ProtocolStructure.StructureId);
-                                                    PauseTillErrorAcknowledged(ui, warning);
+                                                    var warning = string.Format("Specified margin to CROP structure {0} is invalid, defaulting to no additional margin...", ProtocolStructure.StructureId);
+                                                    _warnings.Add(warning);
+                                                    //PauseTillErrorAcknowledged(ui, warning);
                                                 });
                                             }
                                         }
@@ -609,8 +651,9 @@ namespace Optimate
                                                 ui.Invoke(() =>
                                                 {
                                                     Errors = true;
-                                                    var warning = string.Format("Unable to read external crop setting (true/false) for {0}, defaulting to external crop...", ProtocolStructure.StructureId);
-                                                    PauseTillErrorAcknowledged(ui, warning);
+                                                    var warning = string.Format("Unable to read external CROP setting (true/false) for {0}, defaulting to external crop...", ProtocolStructure.StructureId);
+                                                    _warnings.Add(warning);
+                                                    //PauseTillErrorAcknowledged(ui, warning);
                                                 });
                                             }
                                         }
@@ -630,8 +673,20 @@ namespace Optimate
                                             ui.Invoke(() =>
                                             {
                                                 Errors = true;
-                                                var warning = string.Format("Error during creation of {0} : Target of SUB operation could not be found", ProtocolStructure.StructureId);
-                                                PauseTillErrorAcknowledged(ui, warning);
+                                                var warning = string.Format("Target of SUB operation could not be found during creation of {0}, skipping operation...", ProtocolStructure.StructureId);
+                                                _warnings.Add(warning);
+                                                //PauseTillErrorAcknowledged(ui, warning);
+                                            });
+                                            break;
+                                        }
+                                        else if (Target.IsEmpty)
+                                        {
+                                            ui.Invoke(() =>
+                                            {
+                                                Errors = true;
+                                                var warning = string.Format("Target of SUB operation [{1}] was empty during creation of {0}, skipping operation...", ProtocolStructure.StructureId, I.Target);
+                                                _warnings.Add(warning);
+                                                //PauseTillErrorAcknowledged(ui, warning);
                                             });
                                             break;
                                         }
@@ -642,16 +697,17 @@ namespace Optimate
                                         break;
                                     case OperatorType.margin:
                                         double UniformMargin;
-                                        double X2margin;
-                                        double Y1margin;
-                                        double Y2margin;
-                                        double Z1margin;
-                                        double Z2margin;
+                                        double leftmargin;
+                                        double antmargin;
+                                        double postmargin;
+                                        double infmargin;
+                                        double supmargin;
                                         if (string.IsNullOrEmpty(I.OperatorParameter))
                                         {
                                             Errors = true;
-                                            var warning = string.Format(@"Margin for {0} is invalid, aborting margin operation...", OS.Id);
-                                            PauseTillErrorAcknowledged(ui, warning);
+                                            var warning = string.Format(@"MARGIN for {0} is invalid, aborting margin operation...", OS.Id);
+                                            _warnings.Add(warning);
+                                           // PauseTillErrorAcknowledged(ui, warning);
                                             break;
                                         }
                                         else
@@ -659,8 +715,9 @@ namespace Optimate
                                             if (!double.TryParse(I.OperatorParameter, out UniformMargin))
                                             {
                                                 Errors = true;
-                                                var warning = string.Format(@"Margin for {0} is invalid, aborting margin operation...", OS.Id);
-                                                PauseTillErrorAcknowledged(ui, warning);
+                                                var warning = string.Format(@"MARGIN for {0} is invalid, aborting margin operation...", OS.Id);
+                                                //PauseTillErrorAcknowledged(ui, warning);
+                                                _warnings.Add(warning);
                                                 break;
                                             }
                                             else if (UniformMargin < 0)
@@ -670,61 +727,70 @@ namespace Optimate
                                             }
                                         }
                                         if (string.IsNullOrEmpty(I.OperatorParameter2))
-                                            Y1margin = UniformMargin;
+                                            antmargin = UniformMargin;
                                         else
                                         {
-                                            if (!double.TryParse(I.OperatorParameter2, out Y1margin))
+                                            if (!double.TryParse(I.OperatorParameter2, out antmargin))
                                             {
                                                 Errors = true;
-                                                PauseTillErrorAcknowledged(ui, string.Format(@"ANTERIOR margin for {0} is invalid, using uniform margin...", OS.Id));
-                                                Y1margin = UniformMargin;
+                                                string warning = string.Format(@"ANTERIOR margin for {0} is invalid, using uniform margin...", OS.Id);
+                                               //PauseTillErrorAcknowledged(ui, warning);
+                                                _warnings.Add(warning);
+                                                antmargin = UniformMargin;
                                             }
                                         }
                                         if (string.IsNullOrEmpty(I.OperatorParameter3))
-                                            Z1margin = UniformMargin;
+                                            infmargin = UniformMargin;
                                         else
                                         {
-                                            if (!double.TryParse(I.OperatorParameter3, out Z1margin))
+                                            if (!double.TryParse(I.OperatorParameter3, out infmargin))
                                             {
                                                 Errors = true;
-                                                PauseTillErrorAcknowledged(ui, string.Format(@"INFERIOR margin for {0} is invalid, using uniform margin...", OS.Id));
-                                                Z1margin = UniformMargin;
+                                                string warning = string.Format(@"INFERIOR margin for {0} is invalid, using uniform margin...", OS.Id);
+                                                //PauseTillErrorAcknowledged(ui, warning);
+                                                _warnings.Add(warning);
+                                                infmargin = UniformMargin;
                                             }
                                         }
                                         if (string.IsNullOrEmpty(I.OperatorParameter4))
-                                            X2margin = UniformMargin;
+                                            leftmargin = UniformMargin;
                                         else
                                         {
-                                            if (!double.TryParse(I.OperatorParameter4, out X2margin))
+                                            if (!double.TryParse(I.OperatorParameter4, out leftmargin))
                                             {
                                                 Errors = true;
-                                                PauseTillErrorAcknowledged(ui, string.Format(@"LEFT margin for {0} is invalid, using uniform margin...", OS.Id));
-                                                X2margin = UniformMargin;
+                                                string warning = string.Format(@"LEFT margin for {0} is invalid, using uniform margin...", OS.Id);
+                                                //PauseTillErrorAcknowledged(ui, warning);
+                                                leftmargin = UniformMargin;
                                             }
                                         }
                                         if (string.IsNullOrEmpty(I.OperatorParameter5))
-                                            Y2margin = UniformMargin;
+                                            postmargin = UniformMargin;
                                         else
                                         {
-                                            if (!double.TryParse(I.OperatorParameter5, out Y2margin))
+                                            if (!double.TryParse(I.OperatorParameter5, out postmargin))
                                             {
                                                 Errors = true;
-                                                PauseTillErrorAcknowledged(ui, string.Format(@"POSTERIOR margin for {0} is invalid, using uniform margin...", OS.Id));
-                                                Y2margin = UniformMargin;
+                                                string warning = string.Format(@"POSTERIOR margin for {0} is invalid, using uniform margin...", OS.Id);
+                                               // PauseTillErrorAcknowledged(ui, warning);
+                                                _warnings.Add(warning);
+                                                postmargin = UniformMargin;
                                             }
                                         }
                                         if (string.IsNullOrEmpty(I.OperatorParameter6))
-                                            Z2margin = UniformMargin;
+                                            supmargin = UniformMargin;
                                         else
                                         {
-                                            if (!double.TryParse(I.OperatorParameter6, out Z2margin))
+                                            if (!double.TryParse(I.OperatorParameter6, out supmargin))
                                             {
                                                 Errors = true;
-                                                PauseTillErrorAcknowledged(ui, string.Format(@"POSTERIOR margin for {0} is invalid, using uniform margin...", OS.Id));
-                                                Z2margin = UniformMargin;
+                                                string warning = string.Format(@"INFERIOR margin for {0} is invalid, using uniform margin...", OS.Id);
+                                               // PauseTillErrorAcknowledged(ui, warning);
+                                                _warnings.Add(warning);
+                                                supmargin = UniformMargin;
                                             }
                                         }
-                                        OS.SegmentVolume = OS.SegmentVolume.AsymmetricMargin(new AxisAlignedMargins(StructureMarginGeometry.Outer, UniformMargin, Y1margin, Z1margin, X2margin, Y2margin, Z2margin));
+                                        OS.SegmentVolume = OS.SegmentVolume.AsymmetricMargin(Helpers.OrientationInvariantMargins.getAxisAlignedMargins(S.Image.ImagingOrientation, UniformMargin, antmargin, infmargin, leftmargin, postmargin, supmargin));
                                         break;
                                     case OperatorType.and:
                                         Target = GetTargetStructure(OS, ProtocolStructure, S, I.Target);
@@ -733,8 +799,20 @@ namespace Optimate
                                             ui.Invoke(() =>
                                             {
                                                 Errors = true;
-                                                var warning = string.Format("Error during creation of {0} : Target of AND operation could not be found", ProtocolStructure.StructureId);
-                                                PauseTillErrorAcknowledged(ui, warning);
+                                                var warning = string.Format("Target of AND operation could not be found during creation of {0}, skipping instruction...", ProtocolStructure.StructureId);
+                                                _warnings.Add(warning);
+                                               // PauseTillErrorAcknowledged(ui, warning);
+                                            });
+                                            break;
+                                        }
+                                        else if (Target.IsEmpty)
+                                        {
+                                            ui.Invoke(() =>
+                                            {
+                                                Errors = true;
+                                                var warning = string.Format("Target of AND operation [{1}] was empty during creation of {0}, skipping instruction...", ProtocolStructure.StructureId, I.Target);
+                                                _warnings.Add(warning);
+                                                // PauseTillErrorAcknowledged(ui, warning);
                                             });
                                             break;
                                         }
@@ -747,8 +825,20 @@ namespace Optimate
                                             ui.Invoke(() =>
                                             {
                                                 Errors = true;
-                                                var warning = string.Format("Error during creation of {0} : Target of AND operation could not be found", ProtocolStructure.StructureId);
-                                                PauseTillErrorAcknowledged(ui, warning);
+                                                var warning = string.Format("Target of SUB FROM operation [{1}] could not be found during creation of {0}, skiping operation", ProtocolStructure.StructureId, I.Target);
+                                                _warnings.Add(warning);
+                                                //PauseTillErrorAcknowledged(ui, warning);
+                                            });
+                                            break;
+                                        }
+                                        else if (Target.IsEmpty)
+                                        {
+                                            ui.Invoke(() =>
+                                            {
+                                                Errors = true;
+                                                var warning = string.Format("Target of SUB FROM operation [{1}] was empty during creation of {0}, skipping operation", ProtocolStructure.StructureId, I.Target);
+                                                _warnings.Add(warning);
+                                                //PauseTillErrorAcknowledged(ui, warning);
                                             });
                                             break;
                                         }
@@ -761,8 +851,20 @@ namespace Optimate
                                             ui.Invoke(() =>
                                             {
                                                 Errors = true;
-                                                var warning = string.Format("Error during creation of {0} : Target of OR operation could not be found", ProtocolStructure.StructureId);
-                                                PauseTillErrorAcknowledged(ui, warning);
+                                                var warning = string.Format("Target of OR operation could not be found during creation of {0}, skipping instruction", ProtocolStructure.StructureId);
+                                                _warnings.Add(warning);
+                                                //PauseTillErrorAcknowledged(ui, warning);
+                                            });
+                                            break;
+                                        }
+                                        else if (Target.IsEmpty)
+                                        {
+                                            ui.Invoke(() =>
+                                            {
+                                                Errors = true;
+                                                var warning = string.Format("Target of OR operation [{1}] was empty during creation of {0}, skipping instruction", ProtocolStructure.StructureId, I.Target);
+                                                _warnings.Add(warning);
+                                                //PauseTillErrorAcknowledged(ui, warning);
                                             });
                                             break;
                                         }
@@ -772,8 +874,9 @@ namespace Optimate
                                         ui.Invoke(() =>
                                         {
                                             Errors = true;
-                                            var warning = string.Format("Opti structure ({0}) creation operation instruction references unrecognized operator ({1})", ProtocolStructure.StructureId, I.Operator);
-                                            PauseTillErrorAcknowledged(ui, warning);
+                                            var warning = string.Format("Opti structure ({0}) creation operation instruction references unrecognized operator ({1}), skipping instruction...", ProtocolStructure.StructureId, I.Operator);
+                                            _warnings.Add(warning);
+                                            //PauseTillErrorAcknowledged(ui, warning);
                                         });
                                         break;
                                 }
@@ -791,10 +894,13 @@ namespace Optimate
                                     S.RemoveStructure(TemOStructure);
 
                             }
-                        Helpers.SeriLog.AddLog(string.Format("@Created opti structure: {0}", ProtocolStructure.StructureId));
-                        newstructures.Add(ProtocolStructure.StructureId);
-                        ui.Invoke(() => WaitMessage = string.Format("{0} created... ({1}/{2})", ProtocolStructure.StructureId, numCompleted, numStructures));
-                        throw new Exception("test", new Exception("inner message"));
+                        if (!abortStructure)
+                        {
+                            Helpers.SeriLog.AddLog(string.Format("@Created opti structure: {0}", ProtocolStructure.StructureId));
+                            newstructures.Add(ProtocolStructure.StructureId);
+                            ui.Invoke(() => WaitMessage = string.Format("{0} created... ({1}/{2})", ProtocolStructure.StructureId, numCompleted, numStructures));
+                        }
+                        
                     }
                     catch (Exception ex)
                     {
@@ -814,8 +920,9 @@ namespace Optimate
             ScriptDone = true;
             if (Errors)
             {
-                StatusMessage = "Script completed with errors, please review...";
+                StatusMessage = "Script completed with warnings, please click here to review...";
                 ScriptCompletionStatusColour = new SolidColorBrush(Colors.Orange);
+                ReviewWarningsVM.SetWarnings(_warnings);
             }
             else
             {
