@@ -24,14 +24,21 @@ namespace Optimate
     {
         public ReviewWarningsPopup()
         {
-            InitializeComponent();
+            try
+            {
+                InitializeComponent();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
-        private void ScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
-        {
-            ScrollViewer scv = (ScrollViewer)sender;
-            scv.ScrollToVerticalOffset(scv.VerticalOffset - e.Delta);
-            e.Handled = true;
-        }
+        //private void ScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        //{
+        //    ScrollViewer scv = (ScrollViewer)sender;
+        //    scv.ScrollToVerticalOffset(scv.VerticalOffset - e.Delta);
+        //    e.Handled = true;
+        //}
     }
 }

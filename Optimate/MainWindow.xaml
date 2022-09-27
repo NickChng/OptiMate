@@ -10,8 +10,8 @@
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=local:ViewModel, IsDesignTimeCreatable=True}"
-        Title="NoPAUSE OptiMate (v1.2)" Height="750" Width="1050" ResizeMode="NoResize"
-        xmlns:theme="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero2">
+        Title="NoPAUSE OptiMate (v1.2)" Height="750" Width="1050" ResizeMode="NoResize">
+    
     <Window.Resources>
         <converters:isMarginInternal x:Key="isMarginInternal"/>
         <converters:AvailableOperators x:Key="AvailableOperators"/>
@@ -1149,7 +1149,7 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <Grid Grid.Column="0">
-                <Popup Visibility="Visible" PlacementTarget="{Binding ElementName=ProgressBar}" StaysOpen="False" Placement="Top" HorizontalOffset="200" AllowsTransparency="True" IsOpen="{Binding ReviewWarningsPopupVisibility, UpdateSourceTrigger=PropertyChanged}">
+                <Popup Visibility="Visible" PlacementTarget="{Binding ElementName=ProgressBar}" StaysOpen="False" Placement="Top" HorizontalOffset="200" AllowsTransparency="True" IsOpen="{Binding ReviewWarningsPopupVisibility, UpdateSourceTrigger=PropertyChanged, FallbackValue=True}">
                     <local:ReviewWarningsPopup MinHeight="35" Height="Auto" DataContext="{Binding ReviewWarningsVM}"/>
                 </Popup>
                 <ProgressBar Name="ProgressBar" Height="30" Margin="30,0,30,0" HorizontalAlignment="Stretch" Template="{StaticResource ProgressBarNC}" IsIndeterminate="True" 

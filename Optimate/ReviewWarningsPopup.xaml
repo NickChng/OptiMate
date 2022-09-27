@@ -6,73 +6,16 @@
              xmlns:local="clr-namespace:Optimate"
              xmlns:converters="clr-namespace:Optimate.Converters"
              mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance Type=local:ReviewWarningsViewModel, IsDesignTimeCreatable=True}"
              x:Name="ReviewWarningsPopupControl"
              xmlns:Microsoft_Windows_Themes="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero"
              Height="Auto" Width="Auto">
-    <!--d:DataContext="{d:DesignInstance Type=local:ReviewWarningsViewModel, IsDesignTimeCreatable=True}"-->
     
     <UserControl.Resources>
-        <Style x:Key="RoundedButton" TargetType="{x:Type Button}">
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Padding" Value="1"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type Button}">
-                        <Grid x:Name="grid">
-                            <Border x:Name="border" CornerRadius="8" BorderBrush="Black" BorderThickness="0">
-                                <Border.Background>
-                                    <RadialGradientBrush GradientOrigin="0.496,1.052">
-                                        <RadialGradientBrush.RelativeTransform>
-                                            <TransformGroup>
-                                                <ScaleTransform CenterX="0.5" CenterY="0.5" 
-                                                        ScaleX="1.5" ScaleY="1.5"/>
-                                                <TranslateTransform X="0.02" Y="0.3"/>
-                                            </TransformGroup>
-                                        </RadialGradientBrush.RelativeTransform>
-                                        <GradientStop Offset="1" Color="CornflowerBlue"/>
-                                        <GradientStop Offset="0.3" Color="LightSlateGray"/>
-                                    </RadialGradientBrush>
-                                </Border.Background>
-                                <ContentPresenter HorizontalAlignment="Center"
-                                          VerticalAlignment="Center"
-                                          TextElement.FontWeight="Bold">
-                                </ContentPresenter>
-                            </Border>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" TargetName="border">
-                                    <Setter.Value>
-                                        <RadialGradientBrush GradientOrigin="0.496,1.052">
-                                            <RadialGradientBrush.RelativeTransform>
-                                                <TransformGroup>
-                                                    <ScaleTransform CenterX="0.5" CenterY="0.5" ScaleX="1.5" ScaleY="1.5"/>
-                                                    <TranslateTransform X="0.02" Y="0.3"/>
-                                                </TransformGroup>
-                                            </RadialGradientBrush.RelativeTransform>
-                                            <GradientStop Color="LightSteelBlue" Offset="1"/>
-                                            <GradientStop Color="LightSlateGray" Offset="0.3"/>
-                                        </RadialGradientBrush>
-                                    </Setter.Value>
-                                </Setter>
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="BorderBrush" TargetName="border" Value="#FF33962B"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" TargetName="grid" Value="0.25"/>
-                            </Trigger>
-
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
         <Style x:Key="ListViewItemStyle" TargetType="ListViewItem">
             <Setter Property="Template">
                 <Setter.Value>
-                    <!-- Trun off default selection-->
+                     <!--Trun off default selection-->
                     <ControlTemplate TargetType="{x:Type ListViewItem}">
                         <Grid>
                             <Border x:Name="Bd" BorderBrush="Transparent" BorderThickness="1" 
@@ -101,10 +44,10 @@
                 </Setter.Value>
             </Setter>
             <Style.Triggers>
-                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorLevel=3, AncestorType=Grid}, Path=IsMouseOver}" Value="false">
+                <!--<DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorLevel=3, AncestorType=Grid}, Path=IsMouseOver}" Value="false">
                     <DataTrigger.Setters>
                         <Setter Property="IsSelected" Value="false"></Setter>
-                        <!--unselects all items after leaving control so they aren't expanded when focus returns-->
+                        unselects all items after leaving control so they aren't expanded when focus returns
                     </DataTrigger.Setters>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Path=Pinned, UpdateSourceTrigger=PropertyChanged}" Value="True">
@@ -112,11 +55,11 @@
                 </DataTrigger>
                 <Trigger Property="IsSelected" Value="True">
                     <Setter Property="FontWeight" Value="Bold" />
-                </Trigger>
+                </Trigger>-->
             </Style.Triggers>
         </Style>
         <SolidColorBrush x:Key="ListBorder" Color="#828790"/>
-        <Style x:Key="ScrollBarStylePopup" TargetType="{x:Type ScrollBar}">
+        <!--<Style x:Key="ScrollBarStylePopup" TargetType="{x:Type ScrollBar}">
             <Setter Property="Background" Value="PapayaWhip"/>
             <Setter Property="Stylus.IsPressAndHoldEnabled" Value="false"/>
             <Setter Property="Stylus.IsFlicksEnabled" Value="false"/>
@@ -182,8 +125,8 @@
                     </Setter>
                 </Trigger>
             </Style.Triggers>
-        </Style>
-        <ControlTemplate x:Key="ScrollViewerControlTemplatePopup" TargetType="{x:Type ScrollViewer}">
+        </Style>-->
+        <!--<ControlTemplate x:Key="ScrollViewerControlTemplatePopup" TargetType="{x:Type ScrollViewer}">
             <Grid x:Name="Grid" Background="{TemplateBinding Background}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -192,8 +135,8 @@
                 <ScrollContentPresenter x:Name="PART_ScrollContentPresenter" CanContentScroll="{TemplateBinding CanContentScroll}" CanHorizontallyScroll="False" CanVerticallyScroll="True" ContentTemplate="{TemplateBinding ContentTemplate}" Content="{TemplateBinding Content}" Grid.Column="0" Margin="{TemplateBinding Padding}" />
                 <ScrollBar x:Name="PART_VerticalScrollBar" Margin="3,0,3,0" AutomationProperties.AutomationId="VerticalScrollBar" Cursor="Arrow" Grid.Column="1" Maximum="{TemplateBinding ScrollableHeight}" Minimum="0" Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" Value="{Binding VerticalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" ViewportSize="{TemplateBinding ViewportHeight}" Style="{DynamicResource ScrollBarStylePopup}"/>
             </Grid>
-        </ControlTemplate>
-        <Style x:Key="EclipsePopupListViewStyle" TargetType="{x:Type ListView}">
+        </ControlTemplate>-->
+        <!--<Style x:Key="EclipsePopupListViewStyle" TargetType="{x:Type ListView}">
             <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"/>
             <Setter Property="BorderBrush" Value="{StaticResource ListBorder}"/>
             <Setter Property="BorderThickness" Value="1"/>
@@ -228,18 +171,13 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-        </Style>
-        <converters:VisibilityInverseConverter x:Key="VisibilityInverseConverter"/>
+        </Style>-->
     </UserControl.Resources>
-    <!--<UserControl.DataContext>
-        <local:ReviewWarningsViewModel/>
-    </UserControl.DataContext>-->
     <Grid Panel.ZIndex="2" MinHeight="30" MinWidth="100" MaxHeight="200">
         <Grid.RowDefinitions>
             <RowDefinition/>
             <RowDefinition Height="Auto" MinHeight="11"/>
         </Grid.RowDefinitions>
-        <!--<local:WaitSpinner Visibility="{Binding Loading, Converter={StaticResource VisibilityConverter}, UpdateSourceTrigger=PropertyChanged}" Height="60" Width="60"/>-->
         <Border Grid.Row="0" Background="PapayaWhip" CornerRadius="10,10,10,10" BorderThickness="0">
             <Grid>
                     <Grid.RowDefinitions>
@@ -249,29 +187,11 @@
                     <TextBlock Grid.Row="0" Text="Warnings:" FontWeight="Bold"  FontSize="16" FontFamily="Arial" VerticalAlignment="Center" TextAlignment="Center" Margin="10,5,0,5" />
                 <ListView Grid.Row="1" Background="PapayaWhip" BorderThickness="0" Margin="5,5,10,5" HorizontalContentAlignment="Stretch" Focusable="False" 
                               VerticalAlignment="Stretch" Visibility="Visible"
-                    ItemsSource="{Binding Warnings, UpdateSourceTrigger=PropertyChanged}" ItemContainerStyle="{DynamicResource ListViewItemStyle}"
-                          Style="{DynamicResource EclipsePopupListViewStyle}"/>
-                <!--ItemContainerStyle="{DynamicResource ListViewItemStyle}" Style="{DynamicResource EclipsePopupListViewStyle}">-->
-                            <!--<ListView.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Vertical"/>
-                                </ItemsPanelTemplate>
-                            </ListView.ItemsPanel>
-                            <ListView.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid>
-                                        --><!--<Button Background="Transparent" BorderThickness="0" Style="{DynamicResource RoundedButton}" ToolTip="{Binding SessionComment}" 
-                                            Command="{Binding DataContext.ImportSelectedProtocolCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
-                                            <TextBlock Text="{Binding Preview.ID}" FontSize="13" VerticalAlignment="Center" Margin="5,3,5,3" HorizontalAlignment="Left" Foreground="White"/>
-                                        </Button>--><!--
-                                    </Grid>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>-->
-                        <!--</ListView>-->
-                
+                    ItemsSource="{Binding Warnings, UpdateSourceTrigger=PropertyChanged}" ItemContainerStyle="{DynamicResource ListViewItemStyle}"/>
+                    <!--Style="{DynamicResource EclipsePopupListViewStyle}"-->
             </Grid>
         </Border>
-        <Grid Grid.Row="1" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,0,0,0"  Visibility="{Binding Loading, Converter={StaticResource VisibilityInverseConverter}, UpdateSourceTrigger=PropertyChanged}">
+        <Grid Grid.Row="1" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,0,0,0" >
             <Path  StrokeThickness="0" Data="M 0,0 L 15,0 L 7.5,10" Fill="PapayaWhip" Margin="-30,0,0,0"/>
         </Grid>
     </Grid>

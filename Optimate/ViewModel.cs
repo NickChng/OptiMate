@@ -219,9 +219,10 @@ namespace Optimate
                 new OptiMateProtocolOptiStructureInstruction() { Operator = OperatorType.copy, DefaultTarget = "Design", Target="Default" },
                 new OptiMateProtocolOptiStructureInstruction() { Operator = OperatorType.and, DefaultTarget = "Design", Target="Default" },
             };
-            var DummyStructure = new OptiMateProtocolOptiStructure() { StructureId = "StructureId", BaseStructure = "BaseStructure", Type = @"CONTROL" };
+            var DummyStructure = new OptiMateProtocolOptiStructure() { StructureId = "StructureId", Instruction=DummyInstructions.ToArray(), BaseStructure = "BaseStructure", Type = @"CONTROL" };
             ActiveProtocol = new OptiMateProtocol() { OptiStructures = new OptiMateProtocolOptiStructure[] {DummyStructure, DummyStructure}, ProtocolDisplayName="Design", version=1};
             ProtocolStructures = new SometimesObservableCollection<OptiMateProtocolOptiStructure>() { DummyStructure, DummyStructure };
+            ReviewWarningsVM = new ReviewWarningsViewModel();
         }
         public EsapiWorker ew = null;
 

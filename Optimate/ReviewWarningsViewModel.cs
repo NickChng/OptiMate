@@ -8,28 +8,35 @@ using System.Windows.Input;
 using PropertyChanged;
 using System.IO;
 using System.Xml.Serialization;
+using System.ComponentModel;
+using System.Windows;
 
 namespace Optimate
 {
     public class ReviewWarningsViewModel : ObservableObject
     {
 
-        public ObservableCollection<string> Warnings { get; set; } = new ObservableCollection<string>();
-        public ReviewWarningsViewModel(List<string> warnings)
-        {
-            Warnings = new ObservableCollection<string>(warnings);
-            RaisePropertyChangedEvent(nameof(Warnings));
-        }
-
+        public List<string> Warnings { get; set; } = new List<string>();
+       
         public void SetWarnings(List<string> warnings)
         {
-            Warnings = new ObservableCollection<string>(warnings);
+            Warnings = new List<string>(warnings);
             RaisePropertyChangedEvent(nameof(Warnings));
         }
         public ReviewWarningsViewModel()
         {
-            var warnings = new List<string>() { "Design", "Time", "Debug" };
-            Warnings = new ObservableCollection<string>(warnings);
+            try
+            {
+                var warnings = new List<string>() { "Design", "Time", "Debug" };
+                foreach (string warning in warnings)
+                {
+                    Warnings.Add(warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
     }
