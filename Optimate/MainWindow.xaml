@@ -679,7 +679,7 @@
                         <ControlTemplate.Triggers>
                             <MultiTrigger>
                                 <MultiTrigger.Conditions>
-                                    <Condition Property="IsEnabled" Value="True"/>
+                                    <Condition Property="IsEnabled" Value="True" />
                                 </MultiTrigger.Conditions>
                                 <MultiTrigger.Setters>
                                     <Setter TargetName="border" Property="BorderThickness" Value="2" />
@@ -709,6 +709,7 @@
         </Style>
         <Style x:Key="OptiStructureComboBoxStyle" TargetType="ComboBox">
             <Setter Property="Background" Value="LightGoldenrodYellow"></Setter>
+            <Setter Property="Validation.ErrorTemplate" Value="{x:Null}"/>
             <Setter Property="BorderBrush" Value="LightSteelBlue"></Setter>
             <Setter Property="HorizontalContentAlignment" Value="Center"></Setter>
             <Setter Property="MaxDropDownHeight" Value="400"></Setter>
@@ -880,16 +881,6 @@
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Auto Structure" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" FontSize="12" VerticalAlignment="Center"/>
                             <Button Grid.Column="1" Style="{StaticResource ButtonStyle_Small}" Command="{Binding AddStructureCommand}" Background="PapayaWhip" ToolTip="Add new structure" VerticalAlignment="Center" Margin="0,0,5,0">
-                                <Button.CommandParameter>
-                                    <MultiBinding Converter="{StaticResource InstructionCommandParameterConverter}">
-                                        <Binding/>
-                                        <Binding Path="DataContext">
-                                            <Binding.RelativeSource>
-                                                <RelativeSource Mode="FindAncestor" AncestorType="ListViewItem" AncestorLevel="2"/>
-                                            </Binding.RelativeSource>
-                                        </Binding>
-                                    </MultiBinding>
-                                </Button.CommandParameter>
                                 <Image Source="Resources/plus_black.png" Stretch="Fill" />
                             </Button>
                         </Grid>
@@ -1029,8 +1020,10 @@
                                                                 </Button>
                                                             </Grid>
                                                             <ComboBox Grid.Column="1" ToolTip="{Binding DefaultTarget}" Visibility="{Binding Operator, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource OperatorToTargetVisibility}}"
-                                                                      Background="{Binding Target, Converter={StaticResource TargetStatusToColor},UpdateSourceTrigger=PropertyChanged}" Template="{DynamicResource OptiComboBoxControlTemplate}"
-                                                                      Style="{DynamicResource OptiStructureComboBoxStyle}"  PreviewMouseWheel="ScrollViewer_PreviewMouseWheel"
+                                                                      Background="{Binding Target, Converter={StaticResource TargetStatusToColor},UpdateSourceTrigger=PropertyChanged}" 
+                                                                      Template="{DynamicResource OptiComboBoxControlTemplate}"
+                                                                      Style="{DynamicResource OptiStructureComboBoxStyle}" 
+                                                                      PreviewMouseWheel="ScrollViewer_PreviewMouseWheel"
                                                                    SelectedItem="{Binding Target, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" HorizontalContentAlignment="Center" 
                                                                       VerticalContentAlignment="Center" Margin="0,0,0,0" VerticalAlignment="Center">
                                                                 <ComboBox.ItemsSource>
@@ -1158,7 +1151,6 @@
                            Visibility="{Binding Working,UpdateSourceTrigger=PropertyChanged, Converter={StaticResource VisibilityConverter}}" />
                 <Border Grid.Column="0" Visibility="{Binding ScriptDone, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource VisibilityConverter}}" CornerRadius="7,7,7,7" Margin="30,0,30,0"
                             HorizontalAlignment="Stretch"
-                            ToolTip="{Binding WarningDetails, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                             BorderBrush="{Binding ScriptCompletionStatusColour}" Grid.ColumnSpan="3" BorderThickness="3">
                     <Button Command="{Binding ToggleWarningVisibilityCommand}" Background="Transparent" Style="{StaticResource ButtonStyle_Fit}" IsEnabled="{Binding Errors, UpdateSourceTrigger=PropertyChanged}">
                         <TextBlock Text="{Binding StatusMessage, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Background="Transparent"
@@ -1167,10 +1159,9 @@
                 </Border>
             </Grid>
             <Grid Grid.Column="1" ToolTip="{Binding StartButtonTooltip}">
-                <!--<Border Background="{Binding StartButtonColor, UpdateSourceTrigger=PropertyChanged}" CornerRadius="5,5,5,5">-->
                 <Button HorizontalAlignment="Center" Style="{StaticResource ButtonStyle_Highlight}" Width="175" Command="{Binding StartCommand}" 
                         Visibility="{Binding IsErrorAcknowledged, Converter={StaticResource VisibilityConverter},UpdateSourceTrigger=PropertyChanged}"
-                            IsEnabled="{Binding allInputsValid, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Margin="2,1,2,1">
+                            IsEnabled="{Binding allInputsValid, UpdateSourceTrigger=PropertyChanged,ValidatesOnDataErrors=True}" Margin="2,1,2,1">
                     <TextBlock Text="{Binding StartButtonText, UpdateSourceTrigger=PropertyChanged}" FontSize="16" FontWeight="bold"/>
                 </Button>
                 <!--</Border>-->
@@ -1178,10 +1169,6 @@
                     <TextBlock Text="Continue" FontSize="16" FontWeight="bold"/>
                 </Button>
             </Grid>
-            <!--<Popup Name="SaveSessionsPopup" PlacementTarget="{Binding ElementName=SaveSessionButton}" Placement="Left" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade"  IsOpen="{Binding SessionSaveVisibility, UpdateSourceTrigger=PropertyChanged}" >
-                <Views:SavePopup DataContext="{Binding ElementName=SquintWindow}" MinHeight="35" Height="Auto"/>
-            </Popup>-->
-
         </Grid>
     </Grid>
 </Window>

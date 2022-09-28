@@ -6,6 +6,7 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -87,8 +88,8 @@ namespace Optimate
                     Operators.SuppressNotification = false;
                     RaisePropertyChangedEvent(nameof(ProtocolVisibility));
                     RaisePropertyChangedEvent(nameof(ProtocolStructures));
-                    RaisePropertyChangedEvent(nameof(allInputsValid));
                     RaisePropertyChangedEvent(nameof(ActiveProtocol));
+                    ValidateControls(null, null);
                 }
                 catch (Exception ex)
                 {
@@ -105,7 +106,7 @@ namespace Optimate
             get
             {
                 if (IsErrorAcknowledged)
-                    if (allInputsValid)
+                    if (_allInputsValid)
                         return @"This generates all opti structures";
                     else
                         return @"Please review input parameters before continuing";
@@ -114,20 +115,10 @@ namespace Optimate
             }
         }
 
-        public SolidColorBrush StartButtonColor
+        private void ValidateControls(object sender, DataErrorsChangedEventArgs e)
         {
-            get
-            {
-                if (allInputsValid)
-                    return new SolidColorBrush(Colors.PaleGreen);
-                else
-                    return new SolidColorBrush(Colors.Orange);
-            }
-        }
-        private void ValidateControls(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
+            CheckAllInputsValid();
             RaisePropertyChangedEvent(nameof(allInputsValid));
-            RaisePropertyChangedEvent(nameof(StartButtonColor));
             RaisePropertyChangedEvent(nameof(StartButtonTooltip));
         }
         public Visibility ProtocolVisibility
@@ -174,35 +165,59 @@ namespace Optimate
         public string ProtocolPath { get; set; }
         public string WaitMessage { get; set; }
 
+        private bool _allInputsValid;
+
+        private void CheckAllInputsValid()
+        {
+            if (Working)
+            {
+                _allInputsValid = false;
+                return;
+            }
+            if (ActiveProtocol != null)
+            {
+                if (ProtocolStructures.Count == 0)
+                {
+                    _allInputsValid = false;
+                    return;
+                }
+                foreach (var PS in ProtocolStructures)
+                {
+                    if (PS.HasErrors)
+                    {
+                        _allInputsValid = false;
+                        return;
+                    }
+                    else
+                    {
+                        foreach (var I in PS.Instruction)
+                        {
+                            if (I.HasErrors)
+                            {
+                                _allInputsValid = false;
+                                return;
+                            }
+                            if (!I.isTargetParameterValid)
+                            {
+                                _allInputsValid = false;
+                                return;
+                            }
+                        }
+                    }
+
+                }
+                _allInputsValid = true;
+            }
+            else
+            {
+                _allInputsValid = false;
+            }
+        }
         public bool allInputsValid
         {
             get
             {
-                if (Working)
-                    return false;
-                if (ActiveProtocol != null)
-                {
-                    foreach (var PS in ProtocolStructures)
-                    {
-                        if (PS.HasErrors)
-                            return false;
-                        else
-                        {
-                            foreach (var I in PS.Instruction)
-                            {
-                                if (I.HasErrors)
-                                    return false;
-                                if (!I.isTargetParameterValid)
-                                    return false;
-                            }
-                        }
-
-                    }
-                }
-                else
-                    return false;
-
-                return true;
+                return _allInputsValid;
             }
         }
 
@@ -221,8 +236,8 @@ namespace Optimate
                 new OptiMateProtocolOptiStructureInstruction() { Operator = OperatorType.copy, DefaultTarget = "Design", Target="Default" },
                 new OptiMateProtocolOptiStructureInstruction() { Operator = OperatorType.and, DefaultTarget = "Design", Target="Default" },
             };
-            var DummyStructure = new OptiMateProtocolOptiStructure() { StructureId = "StructureId", Instruction=DummyInstructions.ToArray(), BaseStructure = "BaseStructure", Type = @"CONTROL" };
-            ActiveProtocol = new OptiMateProtocol() { OptiStructures = new OptiMateProtocolOptiStructure[] {DummyStructure, DummyStructure}, ProtocolDisplayName="Design", version=1};
+            var DummyStructure = new OptiMateProtocolOptiStructure() { StructureId = "StructureId", Instruction = DummyInstructions.ToArray(), BaseStructure = "BaseStructure", Type = @"CONTROL" };
+            ActiveProtocol = new OptiMateProtocol() { OptiStructures = new OptiMateProtocolOptiStructure[] { DummyStructure, DummyStructure }, ProtocolDisplayName = "Design", version = 1 };
             ProtocolStructures = new SometimesObservableCollection<OptiMateProtocolOptiStructure>() { DummyStructure, DummyStructure };
             ReviewWarningsVM = new ReviewWarningsViewModel();
         }
@@ -258,11 +273,11 @@ namespace Optimate
                     // Unsubscribe
                     foreach (var OS in ProtocolStructures)
                     {
-                        OS.PropertyChanged -= ValidateControls;
+                        OS.ErrorsChanged -= ValidateControls;
                         OS.StopDataValidationNotifications();
                         foreach (var I in OS.Instruction)
                         {
-                            I.PropertyChanged -= ValidateControls;
+                            I.ErrorsChanged -= ValidateControls;
                             I.StopDataValidationNotifications();
                         }
                     }
@@ -273,7 +288,7 @@ namespace Optimate
                     Helpers.SeriLog.AddLog("Structures cleared");
                     foreach (var ProtocolStructure in ActiveProtocol.OptiStructures)
                     {
-                        ProtocolStructure.PropertyChanged += ValidateControls;
+                        ProtocolStructure.ErrorsChanged += ValidateControls;
                         ProtocolStructure.StartDataValidationNotifications();
                         newStructures.Add(ProtocolStructure);
                         List<OptiMateProtocolOptiStructureInstruction> UpdatedInstructions = new List<OptiMateProtocolOptiStructureInstruction>();
@@ -283,7 +298,7 @@ namespace Optimate
                         ProtocolStructure.Instruction = UpdatedInstructions.ToArray(); // Add copy instruction 
                         foreach (var I in ProtocolStructure.Instruction)
                         {
-                            I.PropertyChanged += ValidateControls;
+                            I.ErrorsChanged += ValidateControls;
                             I.StartDataValidationNotifications();
                             List<string> AvailableIds = new List<string>(EclipseIds);
                             int Index = ActiveProtocol.OptiStructures.Select(x => x.StructureId).ToList().IndexOf(ProtocolStructure.StructureId);
@@ -438,26 +453,30 @@ namespace Optimate
                 if (OS != null && I != null)
                 {
                     var newInstructions = OS.Instruction.ToList();
-                    var newI = new OptiMateProtocolOptiStructureInstruction() { Operator = OperatorType.crop };
-                    newI.PropertyChanged += ValidateControls;
+                    var newI = new OptiMateProtocolOptiStructureInstruction() { Operator = OperatorType.crop, SuppressNotification = true };
                     newInstructions.Insert(newInstructions.IndexOf(I) + 1, newI);
                     OS.Instruction = newInstructions.ToArray();
+                    newI.ErrorsChanged += ValidateControls;
                     newI.StartDataValidationNotifications();
-
+                    newI.SuppressNotification = false;
+                    ValidateControls(null, null);
                 }
             }
-            
+
         }
         public void AddStructure(object param = null)
         {
-            var newInstruction = new OptiMateProtocolOptiStructureInstruction() { Operator = OperatorType.copy };
-            newInstruction.PropertyChanged += ValidateControls;
+            var newInstruction = new OptiMateProtocolOptiStructureInstruction() { Operator = OperatorType.copy, SuppressNotification = true };
+            newInstruction.ErrorsChanged += ValidateControls;
             List<OptiMateProtocolOptiStructureInstruction> Instructions = new List<OptiMateProtocolOptiStructureInstruction>() { newInstruction };
-            var OS = new OptiMateProtocolOptiStructure() { isNew = true, Instruction = Instructions.ToArray(), Type = DICOMTypes.CONTROL.ToString() };
-            OS.PropertyChanged += ValidateControls;
+            var OS = new OptiMateProtocolOptiStructure() { isNew = true, Instruction = Instructions.ToArray(), Type = DICOMTypes.CONTROL.ToString(), SuppressNotification = true };
+            OS.ErrorsChanged += ValidateControls;
             ProtocolStructures.Add(OS);
             newInstruction.StartDataValidationNotifications();
             OS.StartDataValidationNotifications();
+            newInstruction.SuppressNotification = false;
+            OS.SuppressNotification = false;
+            ValidateControls(null, null); // all this hand-holding is necessary to avoid the storyboard on the start button breaking.  May remove this decoration later, doesn't seem worth it
         }
 
         public void RemoveInstruction(object param = null)
@@ -470,7 +489,7 @@ namespace Optimate
                 List<OptiMateProtocolOptiStructureInstruction> UpdatedInstructions = new List<OptiMateProtocolOptiStructureInstruction>();
                 if (I != null && ProtocolStructure != null)
                 {
-                    I.PropertyChanged -= ValidateControls;
+                    I.ErrorsChanged -= ValidateControls;
                     I.StopDataValidationNotifications();
                     ProtocolStructure.SuppressNotification = true;
                     foreach (var i in ProtocolStructure.Instruction)
@@ -481,7 +500,8 @@ namespace Optimate
                     ProtocolStructure.SuppressNotification = false;
                 }
             }
-            
+            ValidateControls(null, new DataErrorsChangedEventArgs(nameof(RemoveInstruction))); // necessary to validate after an instruction in error is removed if it results in everything else being valid
+
         }
 
         public void RemoveAutoStructure(object param = null)
@@ -489,10 +509,10 @@ namespace Optimate
             OptiMateProtocolOptiStructure ProtocolStructure = param as OptiMateProtocolOptiStructure;
             if (ProtocolStructure != null)
             {
-                ProtocolStructure.PropertyChanged -= ValidateControls;
+                ProtocolStructure.ErrorsChanged -= ValidateControls;
                 if (ProtocolStructures.Contains(ProtocolStructure))
                     ProtocolStructures.Remove(ProtocolStructure);
-                //ValidateControls(null, new PropertyChangedEventArgs(nameof(AddInstruction)));
+                ValidateControls(null, new DataErrorsChangedEventArgs(nameof(RemoveAutoStructure))); // necessary to validate after an structure in error is removed if it results in everything else being valid
             }
         }
 
@@ -710,7 +730,7 @@ namespace Optimate
                                             Errors = true;
                                             var warning = string.Format(@"MARGIN for {0} is invalid, aborting margin operation...", OS.Id);
                                             _warnings.Add(warning);
-                                           // PauseTillErrorAcknowledged(ui, warning);
+                                            // PauseTillErrorAcknowledged(ui, warning);
                                             break;
                                         }
                                         else
@@ -737,7 +757,7 @@ namespace Optimate
                                             {
                                                 Errors = true;
                                                 string warning = string.Format(@"ANTERIOR margin for {0} is invalid, using uniform margin...", OS.Id);
-                                               //PauseTillErrorAcknowledged(ui, warning);
+                                                //PauseTillErrorAcknowledged(ui, warning);
                                                 _warnings.Add(warning);
                                                 antmargin = UniformMargin;
                                             }
@@ -775,7 +795,7 @@ namespace Optimate
                                             {
                                                 Errors = true;
                                                 string warning = string.Format(@"POSTERIOR margin for {0} is invalid, using uniform margin...", OS.Id);
-                                               // PauseTillErrorAcknowledged(ui, warning);
+                                                // PauseTillErrorAcknowledged(ui, warning);
                                                 _warnings.Add(warning);
                                                 postmargin = UniformMargin;
                                             }
@@ -788,7 +808,7 @@ namespace Optimate
                                             {
                                                 Errors = true;
                                                 string warning = string.Format(@"INFERIOR margin for {0} is invalid, using uniform margin...", OS.Id);
-                                               // PauseTillErrorAcknowledged(ui, warning);
+                                                // PauseTillErrorAcknowledged(ui, warning);
                                                 _warnings.Add(warning);
                                                 supmargin = UniformMargin;
                                             }
@@ -805,7 +825,7 @@ namespace Optimate
                                                 Errors = true;
                                                 var warning = string.Format("Target of AND operation could not be found during creation of {0}, skipping instruction...", ProtocolStructure.StructureId);
                                                 _warnings.Add(warning);
-                                               // PauseTillErrorAcknowledged(ui, warning);
+                                                // PauseTillErrorAcknowledged(ui, warning);
                                             });
                                             break;
                                         }
@@ -904,7 +924,7 @@ namespace Optimate
                             newstructures.Add(ProtocolStructure.StructureId);
                             ui.Invoke(() => WaitMessage = string.Format("{0} created... ({1}/{2})", ProtocolStructure.StructureId, numCompleted, numStructures));
                         }
-                        
+
                     }
                     catch (Exception ex)
                     {

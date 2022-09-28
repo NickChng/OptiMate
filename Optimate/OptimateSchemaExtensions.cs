@@ -15,7 +15,7 @@ namespace Optimate
         public void StartDataValidationNotifications()
         {
             PropertyChanged += OptiMateProtocolOptiStructure_PropertyChanged;
-            RaisePropertyChangedEvent(nameof(StructureId));
+            ValidateStructureId();
         }
 
         public void StopDataValidationNotifications()
@@ -86,15 +86,15 @@ namespace Optimate
         public void StartDataValidationNotifications()
         {
             PropertyChanged += OptiMateProtocolOptiStructureInstruction_PropertyChanged;
-            RaisePropertyChangedEvent(nameof(Target));
+            ValidateTarget();
             RaisePropertyChangedEvent(nameof(Operator));
-            RaisePropertyChangedEvent(nameof(OperatorParameter));
-            RaisePropertyChangedEvent(nameof(OperatorParameter2));
-            RaisePropertyChangedEvent(nameof(OperatorParameter3));
-            RaisePropertyChangedEvent(nameof(OperatorParameter4));
-            RaisePropertyChangedEvent(nameof(OperatorParameter5));
-            RaisePropertyChangedEvent(nameof(OperatorParameter6));
-            RaisePropertyChangedEvent(nameof(OperatorParameter7));
+            ValidateOperatorParameter();
+            ValidateOperatorParameter2();
+            ValidateOperatorParameter3();
+            ValidateOperatorParameter4();
+            ValidateOperatorParameter5();
+            ValidateOperatorParameter6();
+            ValidateOperatorParameter7();
         }
         public void StopDataValidationNotifications()
         {
@@ -165,23 +165,11 @@ namespace Optimate
             ClearErrors(nameof(Target));
             switch (Operator)
             {
-                case OperatorType.crop:
-                    if (string.IsNullOrEmpty(Target))
-                        AddError(nameof(Target), "Invalid selection");
-                    break;
-                case OperatorType.sub:
-                    if (string.IsNullOrEmpty(Target))
-                        AddError(nameof(Target), "Invalid selection");
-                    break;
-                case OperatorType.or:
-                    if (string.IsNullOrEmpty(Target))
-                        AddError(nameof(Target), "Invalid selection");
-                    break;
-                case OperatorType.subfrom:
-                    if (string.IsNullOrEmpty(Target))
-                        AddError(nameof(Target), "Invalid selection");
+                case OperatorType.margin:
                     break;
                 default:
+                    if (string.IsNullOrEmpty(Target))
+                        AddError(nameof(Target), "Invalid selection");
                     break;
             }
         }

@@ -58,23 +58,28 @@ namespace Optimate
             if (this._errors.ContainsKey(propertyName))
             {
                 this._errors.Remove(propertyName);
+                this.NotifyErrorsChanged(propertyName);
             }
-            this.NotifyErrorsChanged(propertyName);
         }
 
         public void RemoveError(string propertyName)
         {
             // remove error
             if (this._errors.ContainsKey(propertyName))
+            {
                 this._errors.Remove(propertyName);
-            this.NotifyErrorsChanged(propertyName);
+                this.NotifyErrorsChanged(propertyName);
+            }
         }
 
         public void NotifyErrorsChanged(string propertyName)
         {
             // Notify
             if (this.ErrorsChanged != null)
-                this.ErrorsChanged(this, new DataErrorsChangedEventArgs(propertyName));
+            {
+                if (!SuppressNotification)
+                    this.ErrorsChanged(this, new DataErrorsChangedEventArgs(propertyName));
+            }
         }
 
     }
