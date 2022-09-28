@@ -364,3 +364,6 @@ FodyWeavers.xsd
 
 # Exclude launcher
 PluginTester/
+
+# Exclude wiki resources
+wiki/

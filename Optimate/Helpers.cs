@@ -116,7 +116,6 @@ namespace Optimate
                     case PatientOrientation.FeetFirstProne:
                         return new AxisAlignedMargins(StructureMarginGeometry.Outer, rightMargin, postMargin, supMargin, leftMargin, antMargin, infMargin);
                     default:
-                        //return new AxisAlignedMargins(StructureMarginGeometry.Outer, rightMargin, antMargin, infMargin, leftMargin, postMargin, supMargin);
                         throw new Exception("This orientation is not currently supported");
                 }
             }
