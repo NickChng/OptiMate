@@ -7,8 +7,9 @@ using System.Threading.Tasks;
 using System.Windows.Threading;
 using VMS.TPS.Common.Model.Types;
 using VMS.TPS.Common.Model.API;
+using Optimate;
 
-namespace Optimate
+namespace VMS.TPS
 {
     public class Script // This is the script that will be called by Eclipse.  Note that this project is referenced by CNPluginTester
     {

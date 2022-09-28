@@ -155,6 +155,8 @@ namespace Optimate
             }
         }
 
+        public bool Errors { get; set; } = false;
+
         public string StartButtonText
         {
             get
@@ -503,8 +505,8 @@ namespace Optimate
             CanLoadTemplates = false;
             Working = true;
             ScriptDone = false;
+            Errors = false;
             _warnings.Clear();
-            bool Errors = false;
             var newstructures = new List<string>();
             bool Done = await Task.Run(() => ew.AsyncRunStructureContext((p, S, ui) =>
             {
@@ -791,7 +793,8 @@ namespace Optimate
                                                 supmargin = UniformMargin;
                                             }
                                         }
-                                        OS.SegmentVolume = OS.SegmentVolume.AsymmetricMargin(Helpers.OrientationInvariantMargins.getAxisAlignedMargins(S.Image.ImagingOrientation, UniformMargin, antmargin, infmargin, leftmargin, postmargin, supmargin));
+                                        var AAM = Helpers.OrientationInvariantMargins.getAxisAlignedMargins(S.Image.ImagingOrientation, UniformMargin, antmargin, infmargin, leftmargin, postmargin, supmargin);
+                                        OS.SegmentVolume = OS.SegmentVolume.AsymmetricMargin(AAM);
                                         break;
                                     case OperatorType.and:
                                         Target = GetTargetStructure(OS, ProtocolStructure, S, I.Target);

@@ -42,8 +42,6 @@ namespace Optimate
             {
                 AddError(nameof(StructureId), @"Structure Id is required");
             }
-            else if (Char.IsDigit(StructureId.First()))
-                AddError(nameof(StructureId), @"Structure Id cannot start with digit");
             else if (StructureId.Length > 16)
                 AddError(nameof(StructureId), @"Structure Id must be less than 16 characters");
             RaisePropertyChangedEvent(nameof(StructureIdColor));
@@ -88,6 +86,15 @@ namespace Optimate
         public void StartDataValidationNotifications()
         {
             PropertyChanged += OptiMateProtocolOptiStructureInstruction_PropertyChanged;
+            RaisePropertyChangedEvent(nameof(Target));
+            RaisePropertyChangedEvent(nameof(Operator));
+            RaisePropertyChangedEvent(nameof(OperatorParameter));
+            RaisePropertyChangedEvent(nameof(OperatorParameter2));
+            RaisePropertyChangedEvent(nameof(OperatorParameter3));
+            RaisePropertyChangedEvent(nameof(OperatorParameter4));
+            RaisePropertyChangedEvent(nameof(OperatorParameter5));
+            RaisePropertyChangedEvent(nameof(OperatorParameter6));
+            RaisePropertyChangedEvent(nameof(OperatorParameter7));
         }
         public void StopDataValidationNotifications()
         {
@@ -101,6 +108,18 @@ namespace Optimate
                 case nameof(Target):
                     {
                         ValidateTarget();
+                    }
+                    break;
+                case nameof(Operator):
+                    {
+                        ValidateTarget();
+                        ValidateOperatorParameter();
+                        ValidateOperatorParameter2();
+                        ValidateOperatorParameter3();
+                        ValidateOperatorParameter4();
+                        ValidateOperatorParameter5();
+                        ValidateOperatorParameter6();
+                        ValidateOperatorParameter7();
                     }
                     break;
                 case nameof(OperatorParameter):
@@ -144,19 +163,34 @@ namespace Optimate
         public void ValidateTarget()
         {
             ClearErrors(nameof(Target));
-            if (string.IsNullOrEmpty(Target))
-                AddError(nameof(Target), "Invalid selection");
-            //RaisePropertyChangedEvent(nameof(operatorParameterError));
+            switch (Operator)
+            {
+                case OperatorType.crop:
+                    if (string.IsNullOrEmpty(Target))
+                        AddError(nameof(Target), "Invalid selection");
+                    break;
+                case OperatorType.sub:
+                    if (string.IsNullOrEmpty(Target))
+                        AddError(nameof(Target), "Invalid selection");
+                    break;
+                case OperatorType.or:
+                    if (string.IsNullOrEmpty(Target))
+                        AddError(nameof(Target), "Invalid selection");
+                    break;
+                case OperatorType.subfrom:
+                    if (string.IsNullOrEmpty(Target))
+                        AddError(nameof(Target), "Invalid selection");
+                    break;
+                default:
+                    break;
+            }
         }
 
         public bool isTargetParameterValid
         {
             get
             {
-                if (Operator != OperatorType.margin)
-                    return (!string.IsNullOrEmpty(targetField));
-                else
-                    return true;
+                return !HasError(nameof(Target));
 
             }
         }
@@ -176,6 +210,8 @@ namespace Optimate
                         AddError(nameof(OperatorParameter), @"Input is invalid");
                     break;
                 case OperatorType.crop:
+                    if (string.IsNullOrEmpty(OperatorParameter))
+                        break;
                     if (double.TryParse(OperatorParameter, out marginValue))
                     {
                         if (marginValue > 50 || marginValue < 0)
@@ -224,6 +260,8 @@ namespace Optimate
             switch (Operator)
             {
                 case OperatorType.margin:
+                    if (string.IsNullOrEmpty(OperatorParameter2))
+                        break;
                     if (double.TryParse(OperatorParameter2, out double marginValue))
                     {
                         if (marginValue > 50 || marginValue < 0)
@@ -273,6 +311,8 @@ namespace Optimate
             switch (Operator)
             {
                 case OperatorType.margin:
+                    if (string.IsNullOrEmpty(OperatorParameter3))
+                        break;
                     if (double.TryParse(OperatorParameter3, out double marginValue))
                     {
                         if (marginValue > 50 || marginValue < 0)
@@ -320,6 +360,8 @@ namespace Optimate
             switch (Operator)
             {
                 case OperatorType.margin:
+                    if (string.IsNullOrEmpty(OperatorParameter4))
+                        break;
                     if (double.TryParse(OperatorParameter4, out double marginValue))
                     {
                         if (marginValue > 50 || marginValue < 0)
@@ -367,6 +409,8 @@ namespace Optimate
             switch (Operator)
             {
                 case OperatorType.margin:
+                    if (string.IsNullOrEmpty(OperatorParameter5))
+                        break;
                     if (double.TryParse(OperatorParameter5, out double marginValue))
                     {
                         if (marginValue > 50 || marginValue < 0)
@@ -415,6 +459,8 @@ namespace Optimate
             switch (Operator)
             {
                 case OperatorType.margin:
+                    if (string.IsNullOrEmpty(OperatorParameter6))
+                        break;
                     if (double.TryParse(OperatorParameter6, out double marginValue))
                     {
                         if (marginValue > 50 || marginValue < 0)
@@ -462,6 +508,8 @@ namespace Optimate
             switch (Operator)
             {
                 case OperatorType.margin:
+                    if (string.IsNullOrEmpty(OperatorParameter7))
+                        break;
                     if (double.TryParse(OperatorParameter7, out double marginValue))
                     {
                         if (marginValue > 50 || marginValue < 0)

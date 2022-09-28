@@ -1160,7 +1160,7 @@
                             HorizontalAlignment="Stretch"
                             ToolTip="{Binding WarningDetails, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                             BorderBrush="{Binding ScriptCompletionStatusColour}" Grid.ColumnSpan="3" BorderThickness="3">
-                    <Button Command="{Binding ToggleWarningVisibilityCommand}" Background="Transparent" Style="{StaticResource ButtonStyle_Fit}">
+                    <Button Command="{Binding ToggleWarningVisibilityCommand}" Background="Transparent" Style="{StaticResource ButtonStyle_Fit}" IsEnabled="{Binding Errors, UpdateSourceTrigger=PropertyChanged}">
                         <TextBlock Text="{Binding StatusMessage, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Background="Transparent"
                                    Foreground="Black"  FontSize="13" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </Button> 
