@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<OptiMateProtocol ProtocolDisplayName="CN_HN_70in35" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="\\spvaimapcn\data$\Apps\OptiMate\Schema\OptimateSchema.xsd">
+  <version>0</version>
+  <OptiStructures>
+    <OptiStructure StructureId="Brainstem_PRV" isHighResolution="false" Type="Control" BaseStructure="Brainstem">
+      <Instruction Operator="margin"  OperatorParameter="5" OperatorParameter2="5" OperatorParameter3="0" OperatorParameter4="5" OperatorParameter5="5" OperatorParameter6="5"/>
+    </OptiStructure>
+    <OptiStructure StructureId="SpinalCord_PRV" isHighResolution="false" Type="Control" BaseStructure="SpinalCord">
+      <Instruction Operator="margin"  OperatorParameter="5" OperatorParameter2="5" OperatorParameter3="0" OperatorParameter4="5" OperatorParameter5="5" OperatorParameter6="0"/>
+    </OptiStructure>
+    <OptiStructure StructureId="Optics_PRV" isHighResolution="false" Type="Control" BaseStructure="Optics">
+      <Instruction Operator="margin"  OperatorParameter="3"/>
+    </OptiStructure>
+    <OptiStructure StructureId="PTV_70_eval" isHighResolution="false" Type="Control" BaseStructure="PTV_70">
+      <Instruction Operator="crop" DefaultTarget="skin" OperatorParameter2="true"/>
+    </OptiStructure>
+    <OptiStructure StructureId="PTV_70_opti" isHighResolution="false" Type="Control" BaseStructure="PTV_70">
+      <Instruction Operator="crop" DefaultTarget="Mandible"/>
+    </OptiStructure>
+    <OptiStructure StructureId="PTV_56_eval" isHighResolution="false" Type="Control" BaseStructure="PTV_56" >
+      <Instruction Operator="crop" DefaultTarget="PTV_70"/>
+      <Instruction Operator="crop" DefaultTarget="skin" OperatorParameter="5" OperatorParameter2="true"/>
+    </OptiStructure>
+    <OptiStructure StructureId="PTV_56_opti" isHighResolution="true" Type="Control" BaseStructure="PTV_56_eval">
+      <Instruction Operator="crop" DefaultTarget="PTV_70" OperatorParameter="2" OperatorParameter2="false"/>
+    </OptiStructure>
+    <OptiStructure StructureId="Parotid_R_opti" isHighResolution="false" Type="Control" BaseStructure="Parotid_R" >
+      <Instruction Operator="crop" DefaultTarget="PTV_70" />
+      <Instruction Operator="crop" DefaultTarget="PTV_56"/>
+    </OptiStructure>
+    <OptiStructure StructureId="Parotid_L_opti" isHighResolution="false" Type="Control" BaseStructure="Parotid_L" >
+      <Instruction Operator="crop" DefaultTarget="PTV_70" />
+      <Instruction Operator="crop" DefaultTarget="PTV_56"/>
+    </OptiStructure>
+    <OptiStructure StructureId="Submand_R_opti" isHighResolution="false" Type="Control" BaseStructure="Submand_R">
+      <Instruction Operator="crop" DefaultTarget="PTV_70" />
+      <Instruction Operator="crop" DefaultTarget="PTV_56"/>
+    </OptiStructure>
+    <OptiStructure StructureId="Submand_L_opti" isHighResolution="false" Type="Control" BaseStructure="Submand_L">
+      <Instruction Operator="crop" DefaultTarget="PTV_70" />
+      <Instruction Operator="crop" DefaultTarget="PTV_56"/>
+    </OptiStructure>
+    <OptiStructure StructureId="OralCavity_opti" isHighResolution="false" Type="Control" BaseStructure="OralCavity">
+      <Instruction Operator="crop" DefaultTarget="PTV_70" />
+      <Instruction Operator="crop" DefaultTarget="PTV_56"/>
+    </OptiStructure>
+    <OptiStructure StructureId="Mandible_opti" isHighResolution="false" Type="Control" BaseStructure="Mandible" >
+      <Instruction Operator="crop" DefaultTarget="PTV_70" />
+      <Instruction Operator="crop" DefaultTarget="PTV_56"/>
+    </OptiStructure>
+    <OptiStructure StructureId="PTVandMandible" isHighResolution="false" Type="Control" BaseStructure="PTV_70">
+      <Instruction Operator="and" DefaultTarget="Mandible" /> 
+  </OptiStructure>
+
+    <OptiStructure StructureId="Musc_Cons_opti" isHighResolution="false" Type="Control" BaseStructure="Musc_Constrict">
+      <Instruction Operator="crop" DefaultTarget="PTV_70" />
+      <Instruction Operator="crop" DefaultTarget="PTV_56"/>
+    </OptiStructure>
+    <OptiStructure StructureId="Larynx_opti" isHighResolution="false" Type="Control" BaseStructure="Larynx">
+      <Instruction Operator="crop" DefaultTarget="PTV_70" />
+      <Instruction Operator="crop" DefaultTarget="PTV_56"/>
+    </OptiStructure>
+   
+  </OptiStructures>
+</OptiMateProtocol>
