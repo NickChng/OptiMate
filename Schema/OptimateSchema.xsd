@@ -63,7 +63,7 @@
   </xs:element>
   <xs:complexType name="ObservableObject" abstract="true">
     <xs:sequence>
-      <xs:element minOccurs="1" maxOccurs="1" name="SuppressNotification" type="xs:boolean" />
+      <xs:element minOccurs="0" maxOccurs="1" name="SuppressNotification" type="xs:boolean" />
     </xs:sequence>
   </xs:complexType>
 </xs:schema>
