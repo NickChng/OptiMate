@@ -10,8 +10,8 @@
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=local:ViewModel, IsDesignTimeCreatable=True}"
-        Title="NoPAUSE OptiMate (v1.2)" Height="750" Width="1050" ResizeMode="NoResize">
-    
+        Title="NoPAUSE OptiMate (v1.3)" Height="750" Width="1050" ResizeMode="NoResize">
+
     <Window.Resources>
         <converters:isMarginInternal x:Key="isMarginInternal"/>
         <converters:AvailableOperators x:Key="AvailableOperators"/>
@@ -806,12 +806,16 @@
         </ControlTemplate>
     </Window.Resources>
     <Grid KeyDown="KeyDown">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="179*"/>
+            <ColumnDefinition Width="871*"/>
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Grid Grid.Row="0" Margin="20,0,0,0">
+        <Grid Grid.Row="0" Margin="20,0,0,0" Grid.ColumnSpan="2">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
@@ -823,7 +827,7 @@
             </StackPanel>
             <Border Grid.Row="1" Background="Black" Height="2" HorizontalAlignment="Stretch" Margin="0,5,20,10"/>
         </Grid>
-        <Grid Grid.Row="1" Margin="20,0,20,0" VerticalAlignment="Stretch">
+        <Grid Margin="20,58,20,0" Grid.ColumnSpan="2" Grid.RowSpan="2">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -848,7 +852,7 @@
                         ItemsSource="{Binding Protocols, UpdateSourceTrigger=PropertyChanged}"  DisplayMemberPath="ProtocolDisplayName"
                         SelectedItem="{Binding SelectedProtocol, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanLoadTemplates, UpdateSourceTrigger=PropertyChanged}">
                     </ComboBox>
-                    
+
 
                     <!--<ComboBox  Grid.Column="1" Margin="5,4,0,4" VerticalAlignment="Center" HorizontalAlignment="Stretch" MinWidth="200" FontSize="14">
 
@@ -1136,7 +1140,7 @@
             </Grid>
 
         </Grid>
-        <Grid Grid.Row="2" Margin="20,15,20,15" Height="45" VerticalAlignment="Center">
+        <Grid Grid.Row="2" Margin="20,0,20,0" Height="45" VerticalAlignment="Center" Grid.ColumnSpan="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
@@ -1155,7 +1159,7 @@
                     <Button Command="{Binding ToggleWarningVisibilityCommand}" Background="Transparent" Style="{StaticResource ButtonStyle_Fit}" IsEnabled="{Binding Errors, UpdateSourceTrigger=PropertyChanged}">
                         <TextBlock Text="{Binding StatusMessage, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Background="Transparent"
                                    Foreground="Black"  FontSize="13" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                    </Button> 
+                    </Button>
                 </Border>
             </Grid>
             <Grid Grid.Column="1" ToolTip="{Binding StartButtonTooltip}">

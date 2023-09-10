@@ -570,22 +570,30 @@ namespace Optimate
                                             });
                                             abortStructure = true;
                                         }
-                                        else if (BaseStructure.IsEmpty)
-                                        {
-                                            ui.Invoke(() =>
-                                            {
-                                                Errors = true;
-                                                var warning = string.Format("Attempt to create structure {1} failed as copy target {0} is empty, skipping structure...", I.Target, ProtocolStructure.StructureId);
-                                                _warnings.Add(warning);
-                                                //PauseTillErrorAcknowledged(ui, warning);
-                                            });
-                                            abortStructure = true;
-                                        }
+                                        //else if (BaseStructure.IsEmpty)
+                                        //{
+                                        //    ui.Invoke(() =>
+                                        //    {
+                                        //        Errors = true;
+                                        //        var warning = string.Format("Attempt to create structure {1} failed as copy target {0} is empty, skipping structure...", I.Target, ProtocolStructure.StructureId);
+                                        //        _warnings.Add(warning);
+                                        //        //PauseTillErrorAcknowledged(ui, warning);
+                                        //    });
+                                        //    abortStructure = true;
+                                        //}
                                         else
                                         {
                                             OS = S.Structures.FirstOrDefault(x => x.Id.ToUpper() == ProtocolStructure.StructureId.ToUpper());
                                             if (OS != null)
                                             {
+                                                if (string.Equals(BaseStructure_Id, OS.Id, StringComparison.OrdinalIgnoreCase)) // if OS is the same as the base structure, then only need to check for high res conversion
+                                                {
+                                                   if (ProtocolStructure.isHighResolution && !OS.IsHighResolution)
+                                                    {
+                                                        OS.ConvertToHighResolution();
+                                                    }
+                                                    continue;
+                                                }
                                                 if (!OS.IsEmpty)
                                                 {
                                                     OS.SegmentVolume = OS.SegmentVolume.And(OS.SegmentVolume.Not()); // clear structure;
