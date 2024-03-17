@@ -2,16 +2,16 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 
 namespace Optimate
 {
-    public abstract class ObservableObject : INotifyPropertyChanged, INotifyDataErrorInfo
+    public abstract partial class ObservableObject : INotifyPropertyChanged, INotifyDataErrorInfo
     {
         public event PropertyChangedEventHandler PropertyChanged;
-        public bool SuppressNotification = false;
-
+        
         protected void RaisePropertyChangedEvent([CallerMemberName] string propertyName = null)
         {
             if (!SuppressNotification)
@@ -25,13 +25,17 @@ namespace Optimate
         {
             if (propertyName == null)
             {
-                return null;
+                return _errors.Values;
             }    
             if (this._errors.ContainsKey(propertyName))
                 return this._errors[propertyName];
             return null;
         }
 
+        public List<string> GetAllErrors()
+        {
+            return _errors.Values.SelectMany(x=>x).ToList();
+        }
         public bool HasErrors
         {
             get { return (this._errors.Count > 0); }
@@ -52,15 +56,21 @@ namespace Optimate
             this.NotifyErrorsChanged(propertyName);
         }
 
-        public void ClearErrors(string propertyName)
+        public void ClearErrors(string propertyName = "")
         {
             // Clear errors
-            if (this._errors.ContainsKey(propertyName))
+            if (string.IsNullOrEmpty(propertyName))
+            {
+                this._errors.Clear();
+            }
+            else if (this._errors.ContainsKey(propertyName))
             {
                 this._errors.Remove(propertyName);
                 this.NotifyErrorsChanged(propertyName);
             }
         }
+
+        
 
         public void RemoveError(string propertyName)
         {
@@ -78,7 +88,9 @@ namespace Optimate
             if (this.ErrorsChanged != null)
             {
                 if (!SuppressNotification)
+                {
                     this.ErrorsChanged(this, new DataErrorsChangedEventArgs(propertyName));
+                }
             }
         }
 

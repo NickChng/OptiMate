@@ -11,6 +11,7 @@ using System.Reflection;
 using System.ComponentModel;
 using Serilog;
 using System.Diagnostics;
+using OptiMate.ViewModels;
 
 namespace Optimate
 {
@@ -101,6 +102,39 @@ namespace Optimate
 
         }
 
+        public static string OperatorName(OperatorTypes operatorType)
+        {
+            switch (operatorType)
+            {
+                case OperatorTypes.copy:
+                    return "Copy";
+                case OperatorTypes.margin:
+                    return "Margin";
+                case OperatorTypes.asymmetricMargin:
+                    return "Asym. Margin";
+                case OperatorTypes.or:
+                    return "Or";
+                case OperatorTypes.and:
+                    return "And";
+                case OperatorTypes.crop:
+                    return "Crop";
+                case OperatorTypes.sub:
+                    return "Sub";
+                case OperatorTypes.subfrom:
+                    return "Sub From";
+                case OperatorTypes.convertDose:
+                    return "Convert Dose";
+                default:
+                    return "Unknown";
+            }
+        }
+
+        public static string CompactForm(this string alias)
+        {
+            return alias.Replace("_", "").Replace(" ", "").Replace("-", "");
+        }
+
+
         public static class OrientationInvariantMargins
         {
             public static AxisAlignedMargins getAxisAlignedMargins(PatientOrientation patientOrientation, double rightMargin, double antMargin, double infMargin, double leftMargin, double postMargin, double supMargin)
@@ -121,6 +155,7 @@ namespace Optimate
             }
         }
     }
-
-
 }
+
+
+

@@ -1,0 +1,179 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema"  targetNamespace="OptiMate" xmlns:OptiMate="OptiMate">
+  <xs:simpleType name="OperatorType" final="restriction">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="UNDEFINED" />
+      <xs:enumeration value="copy" />
+      <xs:enumeration value="margin" />
+      <xs:enumeration value="asymmetricMargin" />
+      <xs:enumeration value="or" />
+      <xs:enumeration value="and" />
+      <xs:enumeration value="crop" />
+      <xs:enumeration value="sub" />
+      <xs:enumeration value="subfrom" />
+      <xs:enumeration value="convertDose" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="emptyString">
+    <xs:restriction base="xs:string">
+      <xs:length value="0" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="MarginTypes">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Outer" />
+      <xs:enumeration value="Inner" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="MarginRange">
+    <xs:restriction base="xs:unsignedShort">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="50"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="MarginRangeOrEmpty">
+    <xs:union memberTypes="OptiMate:MarginRange OptiMate:emptyString"/>
+  </xs:simpleType>
+  <xs:complexType name="TemplateStructure">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="Alias" type="xs:string"/>
+    </xs:sequence>
+    <xs:attribute name="TemplateStructureId" type="xs:string" use="required"/>
+    <xs:attribute name="EclipseStructureId" type="xs:string" fixed=""/>
+  </xs:complexType>
+  <xs:complexType name="GeneratedStructure">
+    <xs:complexContent mixed="false">
+      <xs:extension base="OptiMate:ObservableObject">
+        <xs:sequence>
+          <xs:element name="Instructions" minOccurs="0" maxOccurs="1">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:choice minOccurs="1" maxOccurs="unbounded">
+                  <xs:element name="Copy" type="OptiMate:Copy"/>
+                  <xs:element name="Margin" type="OptiMate:Margin"/>
+                  <xs:element name="AsymmetricMargin" type="OptiMate:AsymmetricMargin"/>
+                  <xs:element name="Or" type="OptiMate:Or"/>
+                  <xs:element name="And" type="OptiMate:And"/>
+                  <xs:element name="Sub" type="OptiMate:Sub"/>
+                  <xs:element name="Crop" type="OptiMate:Crop"/>
+                  <xs:element name="SubFrom" type="OptiMate:SubFrom"/>
+                </xs:choice>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+        <xs:attribute name="StructureId" type="xs:string" use="required"/>
+        <xs:attribute name="isHighResolution" type="xs:boolean" default="false"/>
+        <xs:attribute name="DicomType" type="xs:string" default="CONTROL"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="Instruction">
+  </xs:complexType>
+  <xs:complexType name="Copy">
+    <xs:complexContent mixed="false">
+      <xs:extension base="OptiMate:Instruction">
+        <xs:attribute name="TemplateStructureId" type="xs:string" use="required"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="Or">
+    <xs:complexContent mixed="false">
+      <xs:extension base="OptiMate:Instruction">
+        <xs:attribute name="TemplateStructureId" type="xs:string" use="required"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="And">
+    <xs:complexContent mixed="false">
+      <xs:extension base="OptiMate:Instruction">
+        <xs:attribute name="TemplateStructureId" type="xs:string" use="required"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="Sub">
+    <xs:complexContent mixed="false">
+      <xs:extension base="OptiMate:Instruction">
+        <xs:attribute name="TemplateStructureId" type="xs:string" use="required"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="SubFrom">
+    <xs:complexContent mixed="false">
+      <xs:extension base="OptiMate:Instruction">
+        <xs:attribute name="TemplateStructureId" type="xs:string" use="required"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="ConvertDose">
+    <xs:complexContent mixed="false">
+      <xs:extension base="OptiMate:Instruction">
+        <xs:attribute name="DoseLevel" type="xs:unsignedShort" use="required"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="Crop">
+    <xs:complexContent mixed="false">
+      <xs:extension base="OptiMate:Instruction">
+        <xs:attribute name="TemplateStructureId" type="xs:string" use="required"/>
+        <xs:attribute name="InternalCrop" type="xs:boolean" use="optional" default="false"/>
+        <xs:attribute name="IsotropicOffset" type="OptiMate:MarginRangeOrEmpty" use="optional" default=""/>
+        <xs:attribute name="AntOffset" type="OptiMate:MarginRangeOrEmpty" use="optional" default=""/>
+        <xs:attribute name="PostOffset" type="OptiMate:MarginRangeOrEmpty" use="optional" default=""/>
+        <xs:attribute name="SupOffset" type="OptiMate:MarginRangeOrEmpty" use="optional" default=""/>
+        <xs:attribute name="InfOffset" type="OptiMate:MarginRangeOrEmpty" use="optional" default=""/>
+        <xs:attribute name="LeftOffset" type="OptiMate:MarginRangeOrEmpty" use="optional" default=""/>
+        <xs:attribute name="RightOffset" type="OptiMate:MarginRangeOrEmpty" use="optional" default=""/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="AsymmetricMargin">
+    <xs:complexContent mixed="false">
+      <xs:extension base="OptiMate:Instruction">
+        <xs:attribute name="MarginType" type="OptiMate:MarginTypes" use="optional" default="Outer"/>
+        <xs:attribute name="AntMargin" type="OptiMate:MarginRangeOrEmpty" use="required" />
+        <xs:attribute name="PostMargin" type="OptiMate:MarginRangeOrEmpty" use="required" />
+        <xs:attribute name="SupMargin" type="OptiMate:MarginRangeOrEmpty" use="required" />
+        <xs:attribute name="InfMargin" type="OptiMate:MarginRangeOrEmpty" use="required" />
+        <xs:attribute name="LeftMargin" type="OptiMate:MarginRangeOrEmpty" use="required" />
+        <xs:attribute name="RightMargin" type="OptiMate:MarginRangeOrEmpty" use="required" />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="Margin">
+    <xs:complexContent mixed="false">
+      <xs:extension base="OptiMate:Instruction">
+        <xs:attribute name="MarginType" type="OptiMate:MarginTypes" use="optional" default="Outer"/>
+        <xs:attribute name="IsotropicMargin" type="OptiMate:MarginRangeOrEmpty" use="required"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="OptiMateTemplate">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="1" maxOccurs="1" name="version" type="xs:unsignedByte"/>
+        <xs:element name="TemplateStructures">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element minOccurs="0" maxOccurs="unbounded" name="TemplateStructure" type="OptiMate:TemplateStructure"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="GeneratedStructures">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element minOccurs="0" maxOccurs="unbounded" name="GeneratedStructure" type="OptiMate:GeneratedStructure">
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="TemplateDisplayName" type="xs:string" />
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="ObservableObject" abstract="true">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="1" name="SuppressNotification" type="xs:boolean" />
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

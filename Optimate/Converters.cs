@@ -10,6 +10,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 using Optimate;
+using OptiMate.ViewModels;
 
 namespace Optimate.Converters
 {
@@ -64,9 +65,9 @@ namespace Optimate.Converters
     {
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
-            var ProtocolStructure = value as OptiMateProtocolOptiStructure;
-            if (ProtocolStructure != null)
-                if (ProtocolStructure.Instruction.Count() == 0)
+            var genStructure = value as GeneratedStructureViewModel;
+            if (genStructure != null)
+                if (genStructure.NumInstructions == 0)
                     return false;
                 else
                     return true;
@@ -176,8 +177,8 @@ namespace Optimate.Converters
                 return Visibility.Collapsed;
             else
             {
-                OperatorType op = (OperatorType)value;
-                if (op == OperatorType.crop)
+                OperatorTypes op = (OperatorTypes)value;
+                if (op == OperatorTypes.crop)
                     return Visibility.Visible;
                 else
                     return Visibility.Collapsed;
@@ -191,6 +192,28 @@ namespace Optimate.Converters
         }
     }
 
+    public class AsymmetricMarginVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        {
+            if (value == null)
+                return Visibility.Collapsed;
+            else
+            {
+                OperatorTypes op = (OperatorTypes)value;
+                if (op == OperatorTypes.asymmetricMargin)
+                    return Visibility.Visible;
+                else
+                    return Visibility.Collapsed;
+            }
+
+        }
+        public object ConvertBack(object value, Type targetTypes,
+               object parameter, System.Globalization.CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
     public class MarginVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
@@ -199,8 +222,8 @@ namespace Optimate.Converters
                 return Visibility.Collapsed;
             else
             {
-                OperatorType op = (OperatorType)value;
-                if (op == OperatorType.margin)
+                OperatorTypes op = (OperatorTypes)value;
+                if (op == OperatorTypes.margin)
                     return Visibility.Visible;
                 else
                     return Visibility.Collapsed;
@@ -255,14 +278,16 @@ namespace Optimate.Converters
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
 
-            OperatorType Op = (OperatorType)value;
+            OperatorTypes Op = (OperatorTypes)value;
             switch (Op)
-                {
-                    case OperatorType.margin:
-                        return Visibility.Hidden;
-                    default:
-                        return Visibility.Visible;
-                }
+            {
+                case OperatorTypes.margin:
+                    return Visibility.Hidden;
+                case OperatorTypes.asymmetricMargin:
+                    return Visibility.Hidden;
+                default:
+                    return Visibility.Visible;
+            }
             //}
             //else
             //    return Visibility.Visible;
@@ -300,23 +325,23 @@ namespace Optimate.Converters
         public object Convert(object[] value, Type targetType,
                object parameter, System.Globalization.CultureInfo culture)
         {
-            ObservableCollection<OperatorType> Operators = value[0] as ObservableCollection<OperatorType>;
-            var ProtocolStructure = value[1] as OptiMateProtocolOptiStructure;
-            var thisInstruction = value[2] as OptiMateProtocolOptiStructureInstruction;
-            if (ProtocolStructure.Instruction != null)
+            ObservableCollection<OperatorTypes> Operators = value[0] as ObservableCollection<OperatorTypes>;
+            var genStructure = value[1] as GeneratedStructureViewModel;
+            var thisInstruction = value[2] as InstructionViewModel;
+            if (genStructure?.InstructionViewModels != null)
             {
-                var index = ProtocolStructure.Instruction.ToList().IndexOf(thisInstruction);
+                var index = genStructure.InstructionViewModels.ToList().IndexOf(thisInstruction);
                 if (index > 0)
                 {
-                    Operators.Remove(OperatorType.copy);
+                    Operators.Remove(OperatorTypes.copy);
                     return Operators;
                 }
                 else
-                    return new ObservableCollection<OperatorType>() { OperatorType.copy };
+                    return new ObservableCollection<OperatorTypes>() { OperatorTypes.copy };
             }
             else
             {
-                return new ObservableCollection<OperatorType>() { OperatorType.copy };
+                return new ObservableCollection<OperatorTypes>() { OperatorTypes.copy };
             }
         }
 
@@ -330,8 +355,8 @@ namespace Optimate.Converters
         public object Convert(object[] value, Type targetType,
                object parameter, System.Globalization.CultureInfo culture)
         {
-            OptiMateProtocolOptiStructureInstruction I = value[0] as OptiMateProtocolOptiStructureInstruction;
-            OptiMateProtocolOptiStructureInstruction[] InstructionArray = value[1] as OptiMateProtocolOptiStructureInstruction[];
+            InstructionViewModel I = value[0] as InstructionViewModel;
+            IEnumerable<InstructionViewModel> InstructionArray = value[1] as IEnumerable<InstructionViewModel>;
             if (I != null && InstructionArray != null)
                 return string.Format(@"({0})", ((InstructionArray.ToList()).IndexOf(I) + 1));
             else
@@ -367,7 +392,7 @@ namespace Optimate.Converters
                 string currentOptiId = (value[0] as string);
                 ObservableCollection<string> Ids = value[1] as ObservableCollection<string>;
                 ObservableCollection<string> AvailableIds = new ObservableCollection<string>(Ids);
-                OptiMateProtocol P = value[2] as OptiMateProtocol;
+                OptiMateTemplate P = value[2] as OptiMateTemplate;
                 string defaultId = (value[3] as string);
                 if (currentOptiId == null)
                 {
@@ -375,12 +400,12 @@ namespace Optimate.Converters
                 }
                 if (P != null)
                 {
-                    if (P.OptiStructures != null)
+                    if (P.GeneratedStructures != null)
                     {
-                        int Index = P.OptiStructures.Select(x => x.StructureId).ToList().IndexOf(currentOptiId);
+                        int Index = P.GeneratedStructures.Select(x => x.StructureId).ToList().IndexOf(currentOptiId);
                         if (Index >= 0)
                         {
-                            foreach (var optiId in P.OptiStructures.Select(x => x.StructureId).ToList().Take(Index))
+                            foreach (var optiId in P.GeneratedStructures.Select(x => x.StructureId).ToList().Take(Index))
                                 AvailableIds.Add(optiId);
                         }
                     }
@@ -428,7 +453,7 @@ namespace Optimate.Converters
                object parameter, System.Globalization.CultureInfo culture)
         {
             string init = (value[0] as string);
-            ObservableCollection<string> AvailableStructures = value[1] as ObservableCollection<string>;
+            ObservableCollection<EclipseStructureViewModel> AvailableStructures = value[1] as ObservableCollection<EclipseStructureViewModel>;
             if (init == null)
             {
                 return AvailableStructures;
@@ -441,7 +466,7 @@ namespace Optimate.Converters
                     LD[i] = double.PositiveInfinity;
                 }
                 int c = 0;
-                foreach (string S in AvailableStructures)
+                foreach (string S in AvailableStructures.Select(x=>x.EclipseId))
                 {
                     var CurrentId = init.ToUpper();
                     var stripString = S.Replace(@"B_", @"").Replace(@"_", @"").ToUpper();
@@ -452,8 +477,9 @@ namespace Optimate.Converters
                     LD[c] = LDist;
                     c++;
                 }
-                var temp = new ObservableCollection<string>(AvailableStructures.Zip(LD, (s, l) => new { key = s, LD = l }).OrderBy(x => x.LD).Select(x => x.key).ToList());
-                return temp;
+                return AvailableStructures.Zip(LD, (s, l) => new { key = s, LD = l }).OrderBy(x => x.LD).Select(x => x.key).ToList();
+                //var temp = new ObservableCollection<string>(AvailableStructures.Zip(LD, (s, l) => new { key = s, LD = l }).OrderBy(x => x.LD).Select(x => x.key).ToList());
+                //return temp;
             }
             else
                 return AvailableStructures;
@@ -462,6 +488,26 @@ namespace Optimate.Converters
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
+        }
+    }
+
+    public class ConvertToOperatorName : IValueConverter
+    {
+        public object Convert(object value, Type targetType,
+             object parameter, System.Globalization.CultureInfo culture)
+        {
+            if (value is OperatorTypes)
+            {
+                OperatorTypes V = (OperatorTypes)value;
+                return Helpers.OperatorName(V);
+            }
+            else
+                return "";
+        }
+        public object ConvertBack(object value, Type targetTypes,
+             object parameter, System.Globalization.CultureInfo culture)
+        {
+            return null;
         }
     }
 

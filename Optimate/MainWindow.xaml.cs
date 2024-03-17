@@ -12,6 +12,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Optimate.ViewModels;
+using OptiMate.ViewModels;
 
 namespace Optimate
 {

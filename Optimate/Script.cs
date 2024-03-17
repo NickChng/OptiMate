@@ -8,6 +8,8 @@ using System.Windows.Threading;
 using VMS.TPS.Common.Model.Types;
 using VMS.TPS.Common.Model.API;
 using Optimate;
+using Optimate.ViewModels;
+using OptiMate.Models;
 
 namespace VMS.TPS
 {
@@ -28,7 +30,8 @@ namespace VMS.TPS
 
         private void InitializeAndStartMainWindow(EsapiWorker esapiWorker)
         {
-            var viewModel = new ViewModel(esapiWorker);
+            var model = new MainModel(esapiWorker);
+            var viewModel = new ViewModel(model);
             var mainWindow = new ScriptWindow(viewModel);
             mainWindow.ShowDialog();
         }

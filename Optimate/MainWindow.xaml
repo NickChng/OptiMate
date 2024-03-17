@@ -6,14 +6,17 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Optimate"
+        xmlns:views="clr-namespace:OptiMate.Views"
+        xmlns:viewModels="clr-namespace:Optimate.ViewModels"
+        xmlns:controls="clr-namespace:OptiMate.Controls"
         xmlns:converters="clr-namespace:Optimate.Converters"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        d:DataContext="{d:DesignInstance Type=local:ViewModel, IsDesignTimeCreatable=True}"
-        Title="NoPAUSE OptiMate (v1.3)" Height="750" Width="1050" ResizeMode="NoResize">
-
+        d:DataContext="{d:DesignInstance Type=viewModels:ViewModel, IsDesignTimeCreatable=True}"
+        Title="NoPAUSE OptiMate (v2.0)" Height="1000" Width="1400" ResizeMode="NoResize">
     <Window.Resources>
         <converters:isMarginInternal x:Key="isMarginInternal"/>
+        <converters:ConvertToOperatorName x:Key="ConvertToOperatorName"/>
         <converters:AvailableOperators x:Key="AvailableOperators"/>
         <converters:ShowRemoveInstructionButtonConverter x:Key="ShowRemoveInstructionButtonConverter"/>
         <converters:ValidNonEmptyParameterToColor x:Key="ValidNonEmptyParameterToColor"/>
@@ -21,6 +24,7 @@
         <converters:InstructionNumberConverter x:Key="InstructionNumberConverter"/>
         <converters:CropVisibilityConverter x:Key="CropVisibilityConverter"/>
         <converters:MarginVisibilityConverter x:Key="MarginVisibilityConverter"/>
+        <converters:AsymmetricMarginVisibilityConverter x:Key="AsymmetricMarginVisibilityConverter"/>
         <converters:BoolToString x:Key="BoolToString"/>
         <converters:InstructionCommandParameterConverter x:Key="InstructionCommandParameterConverter"/>
         <converters:SortStructuresConverter x:Key="SortStructuresConverter"/>
@@ -30,6 +34,110 @@
         <converters:VisibilityConverter x:Key="VisibilityConverter"/>
         <converters:VisibilityInverseConverter x:Key="VisibilityInverseConverter"/>
         <converters:VisibilityMultiConverter x:Key="VisibilityMultiConverter"/>
+        <Thickness x:Key="Tab_Border_Thickness">1,1,1,1</Thickness>
+        <Thickness x:Key="TabItem_Border_Thickness">1,1,1,1</Thickness>
+        <!--border thickness for a selected tab, the bottom has no border to look like the TabItem is part of the main selected area-->
+        <Thickness x:Key="TabItem_Border_Thickness_Selected">1,1,1,0</Thickness>
+        <Thickness x:Key="TabItem_Spacer_Between_Tabs">0,0,1,0</Thickness>
+        <CornerRadius x:Key="TabItem_Corner_Radius">5,5,0,0</CornerRadius>
+        <!--we leave the top left a square so it blends nicely with the tab item-->
+        <CornerRadius x:Key="TabConrol_Corner_Radius">0,5,5,5</CornerRadius>
+        <SolidColorBrush x:Key="Tab_Border_Color">CornflowerBlue</SolidColorBrush>
+        <SolidColorBrush x:Key="Tab_Background_Color">#EFEFF2</SolidColorBrush>
+        <LinearGradientBrush x:Key="TabItem_Background_Color_Selected"
+                             StartPoint="0.5,0"
+                             EndPoint="0.5,1">
+            <GradientStop Color="CornflowerBlue"
+                          Offset="0" />
+            <GradientStop Color="White"
+                          Offset="0.2" />
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="TabItem_Border_Color_Selected"
+                             StartPoint="0.5,0"
+                             EndPoint="0.5,1">
+            <GradientStop Color="CornflowerBlue"
+                          Offset="0" />
+            <GradientStop Color="CornflowerBlue"
+                          Offset="0.2" />
+        </LinearGradientBrush>
+        <!--style for the top tabitems-->
+        <Style TargetType="{x:Type TabItem}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TabItem}">
+                        <Border x:Name="tabBorder"
+                                Height="32"
+                                Width="150"
+                                BorderBrush="{StaticResource Tab_Border_Color}"
+                                BorderThickness="{StaticResource TabItem_Border_Thickness}"
+                                VerticalAlignment="Bottom"
+                                Margin="{StaticResource TabItem_Spacer_Between_Tabs}"
+                                CornerRadius="{StaticResource TabItem_Corner_Radius}"
+                                Background="{StaticResource Tab_Background_Color}">
+                            <ContentPresenter x:Name="tabContent"
+                                              ContentSource="Header"
+                                              RecognizesAccessKey="True"
+                                              VerticalAlignment="Center"
+                                              HorizontalAlignment="Center" />
+                        </Border>
+                        <!--here we create a trigger so that
+                        selected tabs will be taller, will be highlighted and
+                        will not have a bottom border-->
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected"
+                                     Value="True">
+                                <!--remove bottom border-->
+                                <Setter TargetName="tabBorder"
+                                        Property="BorderThickness"
+                                        Value="{StaticResource TabItem_Border_Thickness_Selected}" />
+                                <Setter TargetName="tabBorder"
+                                        Property="Height"
+                                        Value="34" />
+                                <Setter TargetName="tabBorder"
+                                        Property="BorderBrush"
+                                        Value="{StaticResource TabItem_Border_Color_Selected}" />
+                                <Setter TargetName="tabBorder"
+                                        Property="Background"
+                                        Value="{StaticResource TabItem_Background_Color_Selected}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <!--style for the whole tab control-->
+        <Style TargetType="{x:Type TabControl}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabControl">
+                        <Grid UseLayoutRounding="True">
+                            <Grid.RowDefinitions>
+                                <!--3 rows for the TabPanel, overlap, and the selected content-->
+                                <RowDefinition Height="32" />
+                                <RowDefinition Height="2" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <!--TabPanel needs to be on top of the selected content border-->
+                            <TabPanel IsItemsHost="True"
+                                      Grid.Row="0"
+                                      Grid.RowSpan="2"
+                                      Panel.ZIndex="1" />
+                            <Border Grid.Row="1"
+                                    Grid.RowSpan="2"
+                                    CornerRadius="{StaticResource TabConrol_Corner_Radius}"
+                                    Panel.ZIndex="0"
+                                    BorderThickness="{StaticResource Tab_Border_Thickness}"
+                                    Background="{TemplateBinding Background}"
+                                    Margin="0,0.5,0,0"
+                                    BorderBrush="CornflowerBlue">
+                                <ContentPresenter Margin="4"
+                                                  ContentSource="SelectedContent" />
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <ControlTemplate x:Key="ProgressBarNC" TargetType="{x:Type ProgressBar}">
             <Grid x:Name="TemplateRoot" SnapsToDevicePixels="True">
                 <Rectangle Fill="AliceBlue" RadiusY="2" RadiusX="2"/>
@@ -174,11 +282,11 @@
                     <Trigger.EnterActions>
                         <BeginStoryboard>
                             <Storyboard RepeatBehavior="Forever">
-                                <ThicknessAnimationUsingKeyFrames BeginTime="0:0:0" Duration="0:0:2" Storyboard.TargetName="GR" Storyboard.TargetProperty="Margin">
+                                <ThicknessAnimationUsingKeyFrames BeginTime="0:0:0" Duration="0:0:4" Storyboard.TargetName="GR" Storyboard.TargetProperty="Margin">
                                     <ThicknessAnimationUsingKeyFrames.KeyFrames>
                                         <LinearThicknessKeyFrame KeyTime="0:0:0" Value="-100,0,0,0"/>
-                                        <LinearThicknessKeyFrame KeyTime="0:0:1" Value="900,0,0,0"/>
-                                        <LinearThicknessKeyFrame KeyTime="0:0:2" Value="-100,0,0,0"/>
+                                        <LinearThicknessKeyFrame KeyTime="0:0:2" Value="1100,0,0,0"/>
+                                        <LinearThicknessKeyFrame KeyTime="0:0:4" Value="-100,0,0,0"/>
                                     </ThicknessAnimationUsingKeyFrames.KeyFrames>
                                 </ThicknessAnimationUsingKeyFrames>
                             </Storyboard>
@@ -335,6 +443,42 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type TextBox}">
                         <Microsoft_Windows_Themes:ListBoxChrome x:Name="Bd" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" RenderMouseOver="{TemplateBinding IsMouseOver}" RenderFocused="{TemplateBinding IsKeyboardFocusWithin}" SnapsToDevicePixels="true">
+                            <ScrollViewer x:Name="PART_ContentHost" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                        </Microsoft_Windows_Themes:ListBoxChrome>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="false">
+                                <Setter Property="Background" TargetName="Bd" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <MultiTrigger>
+                    <MultiTrigger.Conditions>
+                        <Condition Property="IsInactiveSelectionHighlightEnabled" Value="true"/>
+                        <Condition Property="IsSelectionActive" Value="false"/>
+                    </MultiTrigger.Conditions>
+                    <Setter Property="SelectionBrush" Value="{DynamicResource {x:Static SystemColors.InactiveSelectionHighlightBrushKey}}"/>
+                </MultiTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="TextBoxStyle2" BasedOn="{x:Null}" TargetType="{x:Type TextBox}">
+            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+            <Setter Property="Background" Value="PaleGoldenrod"/>
+            <Setter Property="BorderBrush" Value="{StaticResource TextBoxBorder}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Validation.ErrorTemplate" Value="{x:Null}"/>
+            <Setter Property="Padding" Value="1"/>
+            <Setter Property="AllowDrop" Value="true"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="ScrollViewer.PanningMode" Value="VerticalFirst"/>
+            <Setter Property="Stylus.IsFlicksEnabled" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TextBox}">
+                        <Microsoft_Windows_Themes:ListBoxChrome x:Name="Bd" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="LightGoldenrodYellow" RenderMouseOver="{TemplateBinding IsMouseOver}" RenderFocused="{TemplateBinding IsKeyboardFocusWithin}" SnapsToDevicePixels="true">
                             <ScrollViewer x:Name="PART_ContentHost" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
                         </Microsoft_Windows_Themes:ListBoxChrome>
                         <ControlTemplate.Triggers>
@@ -715,6 +859,15 @@
             <Setter Property="MaxDropDownHeight" Value="400"></Setter>
             <Setter Property="Margin" Value="0,0,0,0"></Setter>
         </Style>
+        <!--This one has flat edges so it can be embedded-->
+        <Style x:Key="OptiStructureComboBoxStyle2" TargetType="ComboBox">
+            <Setter Property="Background" Value="LightGoldenrodYellow"></Setter>
+            <Setter Property="Validation.ErrorTemplate" Value="{x:Null}"/>
+            <Setter Property="BorderBrush" Value="Transparent"></Setter>
+            <Setter Property="HorizontalContentAlignment" Value="Center"></Setter>
+            <Setter Property="MaxDropDownHeight" Value="400"></Setter>
+            <Setter Property="Margin" Value="0,0,0,0"></Setter>
+        </Style>
         <!--<Style TargetType="{x:Type ComboBoxItem}">
             <Setter Property="SnapsToDevicePixels" Value="True" />
             <Setter Property="Template">
@@ -805,17 +958,14 @@
             </ControlTemplate.Triggers>
         </ControlTemplate>
     </Window.Resources>
-    <Grid KeyDown="KeyDown">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="179*"/>
-            <ColumnDefinition Width="871*"/>
-        </Grid.ColumnDefinitions>
+    <Grid KeyDown="KeyDown" Margin="20,0,20,10">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Grid Grid.Row="0" Margin="20,0,0,0" Grid.ColumnSpan="2">
+        <Grid Grid.Row="0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
@@ -825,330 +975,456 @@
                 <TextBlock Text="{Binding CurrentStructureSet, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" FontWeight="Bold"
                            VerticalAlignment="Center" FontSize="16" Foreground="SteelBlue" Margin="10,0,0,0"/>
             </StackPanel>
-            <Border Grid.Row="1" Background="Black" Height="2" HorizontalAlignment="Stretch" Margin="0,5,20,10"/>
+            <Border Grid.Row="1" Background="Black" Height="2" HorizontalAlignment="Stretch" Margin="0,5,0,10"/>
         </Grid>
-        <Grid Margin="20,58,20,0" Grid.ColumnSpan="2" Grid.RowSpan="2">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <Border Grid.Row="0" CornerRadius="5,5,5,5" Background="CornflowerBlue" HorizontalAlignment="Stretch" Height="25">
-                    <TextBlock Text="Template selection" Margin="10,0,0,0"  Foreground="White" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
-                </Border>
-                <Grid Grid.Row="1" Margin="5,5,0,10" Height="50">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="Select template:" FontSize="14" FontWeight="Black" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,6,0,6"/>
-                    <ComboBox  Grid.Column="1" Margin="5,4,0,4" VerticalAlignment="Center" HorizontalAlignment="Stretch" MinWidth="200" FontSize="14"
-                        Style="{DynamicResource OptiStructureComboBoxStyle}"
-                        Template="{DynamicResource OptiComboBoxControlTemplate}"
-                        ItemsSource="{Binding Protocols, UpdateSourceTrigger=PropertyChanged}"  DisplayMemberPath="ProtocolDisplayName"
-                        SelectedItem="{Binding SelectedProtocol, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanLoadTemplates, UpdateSourceTrigger=PropertyChanged}">
-                    </ComboBox>
-
-
-                    <!--<ComboBox  Grid.Column="1" Margin="5,4,0,4" VerticalAlignment="Center" HorizontalAlignment="Stretch" MinWidth="200" FontSize="14">
-
-
-                    </ComboBox>-->
-                    <!--<Border Grid.Column="2" Margin="10,0,0,0" CornerRadius="5,5,5,5" Background="PapayaWhip" Height="30" HorizontalAlignment="Right">-->
-                    <Button Grid.Column="2" Margin="10,0,0,0" HorizontalAlignment="Right" Style="{StaticResource ButtonStyle_Medium}" Command="{Binding ReloadTemplateCommand}" Width="Auto" IsEnabled="{Binding CanLoadTemplates, UpdateSourceTrigger=PropertyChanged}">
-                        <TextBlock Text="Reload Templates" FontSize="16" FontWeight="bold" Margin="5,0,5,0"/>
-                    </Button>
-                    <!--</Border>-->
-                    <Border Grid.Column="3" CornerRadius="5,5,5,5" Background="PapayaWhip" Height="30" HorizontalAlignment="Right" Margin="10,0,20,0">
-                        <Button Style="{StaticResource ButtonStyle_Medium}" Width="Auto" Command="{Binding OpenTemplateFolderCommand}" IsEnabled="{Binding CanLoadTemplates, UpdateSourceTrigger=PropertyChanged}">
-                            <TextBlock Text="Open template folder" FontSize="16" FontWeight="bold" Margin="5,0,5,0"/>
+        <Grid Grid.Row="1" Margin="0,0,0,10">
+            <Border CornerRadius="5,5,5,5" BorderBrush="CornflowerBlue" BorderThickness="0.5">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" CornerRadius="5,5,0,0" Background="CornflowerBlue" HorizontalAlignment="Stretch" Height="25" Margin="0,0,0,10">
+                        <TextBlock Text="Template selection" Margin="10,0,0,0"  Foreground="White" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+                    </Border>
+                    <Grid Grid.Row="1" Margin="5,0,5,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="1" Text="Select template:" FontSize="14" FontWeight="DemiBold" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,6,5,6"/>
+                        <ComboBox  Grid.Column="2" Margin="5,4,0,4" VerticalAlignment="Center" HorizontalAlignment="Stretch" MinWidth="200" FontSize="14" Style="{DynamicResource OptiStructureComboBoxStyle}" Template="{DynamicResource OptiComboBoxControlTemplate}" 
+                           ItemsSource="{Binding TemplatePointers, UpdateSourceTrigger=PropertyChanged}"  DisplayMemberPath="TemplateDisplayName"
+                           SelectedItem="{Binding SelectedTemplate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanLoadTemplates, UpdateSourceTrigger=PropertyChanged}">
+                        </ComboBox>
+                        <Button Grid.Column="3" Margin="10,0,0,0" HorizontalAlignment="Right" Style="{StaticResource ButtonStyle_Medium}" Command="{Binding ReloadTemplateCommand}" Width="Auto" IsEnabled="{Binding CanLoadTemplates, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBlock Text="Reload Templates" FontSize="14" FontWeight="DemiBold" Margin="5,0,5,0"/>
                         </Button>
-                    </Border>
-
-                </Grid>
-                <Grid Grid.Row="2" Visibility="{Binding ProtocolVisibility, UpdateSourceTrigger=PropertyChanged}" Height="25" >
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="170"/>
-                        <ColumnDefinition Width="150"/>
-                        <ColumnDefinition Width="140"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Border Grid.Column="0" CornerRadius="5" Background="CornflowerBlue">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Auto Structure" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" FontSize="12" VerticalAlignment="Center"/>
-                            <Button Grid.Column="1" Style="{StaticResource ButtonStyle_Small}" Command="{Binding AddStructureCommand}" Background="PapayaWhip" ToolTip="Add new structure" VerticalAlignment="Center" Margin="0,0,5,0">
-                                <Image Source="Resources/plus_black.png" Stretch="Fill" />
+                        <Border Grid.Column="4" CornerRadius="5,5,5,5" Background="PapayaWhip" Height="30" HorizontalAlignment="Right" Margin="10,0,20,0">
+                            <Button Style="{StaticResource ButtonStyle_Medium}" Width="Auto" Command="{Binding OpenTemplateFolderCommand}" IsEnabled="{Binding CanLoadTemplates, UpdateSourceTrigger=PropertyChanged}">
+                                <TextBlock Text="Open template folder" FontSize="14" FontWeight="DemiBold" Margin="5,0,5,0"/>
                             </Button>
-                        </Grid>
-                    </Border>
-                    <Border Grid.Column="1" CornerRadius="5" Background="CornflowerBlue" Margin="5,0,5,0">
-                        <TextBlock Text="Operator" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <Border Grid.Column="2" CornerRadius="5" Background="CornflowerBlue" Margin="5,0,5,0">
-                        <TextBlock Text="Target" Foreground="White"  FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <Border Grid.Column="3" CornerRadius="5" Background="CornflowerBlue" Margin="5,0,5,0">
-                        <TextBlock Text="Instruction Options" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
+                        </Border>
+                    </Grid>
                 </Grid>
-                <Grid Grid.Row="3" Visibility="{Binding ProtocolVisibility, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,0">
-                    <ScrollViewer Margin="0,10,0,0" Focusable="true" VerticalAlignment="Stretch" VerticalScrollBarVisibility="Auto" PreviewMouseWheel="ScrollViewer_PreviewMouseWheel"
-                              Template="{DynamicResource ScrollViewerControlTemplate1}" CanContentScroll="True" Background="Transparent" Visibility="{Binding ProtocolVisibility, UpdateSourceTrigger=PropertyChanged}">
-                        <ListView Style="{StaticResource ListViewStyle1}" ItemContainerStyle="{StaticResource DraggableListViewItemStyle}" AlternationCount="2" 
-                          ItemsSource="{Binding ProtocolStructures, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanLoadTemplates, UpdateSourceTrigger=PropertyChanged}" SelectionChanged="ListView_SelectionChanged" >
-                            <ListView.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Grid Grid.Column="0">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="160"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Grid Grid.Column="0">
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="*" MinHeight="50"/>
-                                                </Grid.RowDefinitions>
-                                                <Grid Grid.Row="0">
-                                                    <Button Style="{StaticResource ButtonStyle_Small}" Command="{Binding DataContext.RemoveAutoStructureCommand, ElementName=MainScriptWindow}" ToolTip="Remove structure"
-                                                                         HorizontalAlignment="Left" CommandParameter="{Binding}" VerticalAlignment="Center" Margin="3,5,0,0">
-                                                        <Image Source="Resources/x.png" Stretch="Fill" />
-                                                    </Button>
-                                                </Grid>
-                                                <Grid Grid.Row="1" Margin="10,-10,0,0">
-                                                    <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center">
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <TextBlock Text="{Binding StructureId}" HorizontalAlignment="Center" FontWeight="bold" FontSize="14" VerticalAlignment="Bottom" Margin="5,0,0,0" 
-                                                       Visibility="{Binding isNew, Converter={StaticResource VisibilityInverseConverter}}"/>
-                                                            <TextBox Text="{Binding StructureId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="1,1,1,1" HorizontalAlignment="Center" FontWeight="bold" FontSize="14" VerticalAlignment="Bottom" MinWidth="100" MaxWidth="130"
-                                                       Visibility="{Binding isNew, Converter={StaticResource VisibilityConverter}}" Background="{Binding StructureIdColor, UpdateSourceTrigger=PropertyChanged,FallbackValue=Orange}"
-                                                                       ToolTip="{Binding structureIdError, UpdateSourceTrigger=PropertyChanged}"/>
-                                                        </StackPanel>
-                                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5,0,0">
-                                                            <TextBlock Text="High Resolution" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Top"/>
-                                                            <CheckBox FontSize="10" Style="{StaticResource CheckBoxStyle1}" HorizontalAlignment="Left" Margin="5,0,0,0"
-                                                          IsChecked="{Binding isHighResolution, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                                                      ToolTip="Toggles high resolution. If any of the operator targets are HR then this option will be ignored to allow the operation and the resulting structure will be HR."/>
-                                                        </StackPanel>
-                                                    </StackPanel>
-                                                </Grid>
-
-
-
-
-                                            </Grid>
-                                        </Grid>
-                                        <Grid Grid.Column="1" >
-                                            <ListView Style="{StaticResource ListViewStyle1}" ItemContainerStyle="{StaticResource DraggableListViewItemStyle}" 
-                                                      ItemsSource="{Binding Instruction, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" HorizontalAlignment="Left">
-                                                <ListView.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Grid Background="Transparent" Margin="10,3,0,3">
-                                                            <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="140"/>
-                                                                <ColumnDefinition Width="150"/>
-                                                                <ColumnDefinition Width="*"/>
-                                                            </Grid.ColumnDefinitions>
-                                                            <Grid Grid.Column="0" >
-                                                                <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="Auto"/>
-                                                                    <ColumnDefinition Width="*"/>
-                                                                    <ColumnDefinition Width="Auto"/>
-                                                                    <ColumnDefinition Width="Auto"/>
-                                                                </Grid.ColumnDefinitions>
-                                                                <TextBlock Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-3,0,0" ToolTip="Instructions execute in this order">
-                                                                    <TextBlock.Text>
-                                                                        <MultiBinding Converter="{StaticResource InstructionNumberConverter}">
-                                                                            <Binding/>
-                                                                            <Binding Path="DataContext.Instruction">
-                                                                                <Binding.RelativeSource>
-                                                                                    <RelativeSource Mode="FindAncestor" AncestorType="ListView" />
-                                                                                </Binding.RelativeSource>
-                                                                            </Binding>
-                                                                        </MultiBinding>
-                                                                    </TextBlock.Text>
-                                                                </TextBlock>
-                                                                <ComboBox Grid.Column="1" SelectedItem="{Binding Operator, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource OptiStructureComboBoxStyle}"
-                                                                         Template="{DynamicResource OptiComboBoxControlTemplate}"
-                                                                          HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                                    <ComboBox.ItemsSource>
-                                                                        <MultiBinding Converter="{StaticResource AvailableOperators}">
-                                                                            <Binding Path="DataContext.Operators" ElementName="MainScriptWindow" UpdateSourceTrigger="PropertyChanged" />
-                                                                            <Binding Path="DataContext" RelativeSource="{RelativeSource AncestorLevel=2, AncestorType=ListViewItem}" UpdateSourceTrigger="PropertyChanged" />
-                                                                            <Binding/>
-                                                                        </MultiBinding>
-                                                                    </ComboBox.ItemsSource>
-                                                                </ComboBox>
-                                                                <Button Grid.Column="3" Style="{StaticResource ButtonStyle_Small}" Command="{Binding DataContext.AddInstructionCommand, ElementName=MainScriptWindow}" ToolTip="Add new instruction following"
-                                                                         HorizontalAlignment="Right"  Margin="0,0,0,0">
-                                                                    <Button.CommandParameter>
-                                                                        <MultiBinding Converter="{StaticResource InstructionCommandParameterConverter}">
-                                                                            <Binding/>
-                                                                            <Binding Path="DataContext">
-                                                                                <Binding.RelativeSource>
-                                                                                    <RelativeSource Mode="FindAncestor" AncestorType="ListViewItem" AncestorLevel="2"/>
-                                                                                </Binding.RelativeSource>
-                                                                            </Binding>
-                                                                        </MultiBinding>
-                                                                    </Button.CommandParameter>
-                                                                    <TextBlock Text="..." />
-                                                                </Button>
-                                                                <Button Grid.Column="2" Style="{StaticResource ButtonStyle_Small}" Command="{Binding DataContext.RemoveInstructionCommand, ElementName=MainScriptWindow}" ToolTip="Remove instruction"
-                                                                         HorizontalAlignment="Right">
-                                                                    <Button.Visibility>
-                                                                        <Binding Converter="{StaticResource ShowRemoveInstructionButtonConverter}" Path="DataContext" RelativeSource="{RelativeSource AncestorLevel=2, AncestorType=ListViewItem}"/>
-                                                                    </Button.Visibility>
-                                                                    <Button.CommandParameter>
-                                                                        <MultiBinding Converter="{StaticResource InstructionCommandParameterConverter}">
-                                                                            <Binding/>
-                                                                            <Binding Path="DataContext">
-                                                                                <Binding.RelativeSource>
-                                                                                    <RelativeSource Mode="FindAncestor" AncestorType="ListViewItem" AncestorLevel="2"/>
-                                                                                </Binding.RelativeSource>
-                                                                            </Binding>
-                                                                        </MultiBinding>
-                                                                    </Button.CommandParameter>
-                                                                    <Image Source="Resources/x.png" Stretch="Fill" />
-                                                                </Button>
-                                                            </Grid>
-                                                            <ComboBox Grid.Column="1" ToolTip="{Binding DefaultTarget}" Visibility="{Binding Operator, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource OperatorToTargetVisibility}}"
-                                                                      Background="{Binding Target, Converter={StaticResource TargetStatusToColor},UpdateSourceTrigger=PropertyChanged}" 
-                                                                      Template="{DynamicResource OptiComboBoxControlTemplate}"
-                                                                      Style="{DynamicResource OptiStructureComboBoxStyle}" 
-                                                                      PreviewMouseWheel="ScrollViewer_PreviewMouseWheel"
-                                                                   SelectedItem="{Binding Target, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" HorizontalContentAlignment="Center" 
-                                                                      VerticalContentAlignment="Center" Margin="0,0,0,0" VerticalAlignment="Center">
-                                                                <ComboBox.ItemsSource>
-                                                                    <MultiBinding Converter="{StaticResource AvailableStructureConverter}" UpdateSourceTrigger="PropertyChanged">
-                                                                        <Binding Path="DataContext.StructureId" UpdateSourceTrigger="PropertyChanged">
-                                                                            <Binding.RelativeSource>
-                                                                                <RelativeSource Mode="FindAncestor" AncestorType="ListViewItem" AncestorLevel="2"/>
-                                                                            </Binding.RelativeSource>
-                                                                        </Binding>
-                                                                        <Binding Path="DataContext.EclipseIds" ElementName="MainScriptWindow" UpdateSourceTrigger="PropertyChanged"/>
-                                                                        <Binding Path="DataContext.ActiveProtocol" ElementName="MainScriptWindow" UpdateSourceTrigger="PropertyChanged"/>
-                                                                        <Binding Path="DefaultTarget" UpdateSourceTrigger="PropertyChanged"/>
-                                                                    </MultiBinding>
-                                                                </ComboBox.ItemsSource>
-                                                            </ComboBox>
-                                                            <Grid Grid.Column="2" Visibility="{Binding Operator, Converter={StaticResource MarginVisibilityConverter}}">
-                                                                <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="Auto"/>
-                                                                    <ColumnDefinition Width="Auto"/>
-                                                                    <ColumnDefinition Width="Auto"/>
-                                                                    <ColumnDefinition Width="Auto"/>
-                                                                    <ColumnDefinition Width="Auto"/>
-                                                                    <ColumnDefinition Width="Auto"/>
-                                                                </Grid.ColumnDefinitions>
-                                                                <Grid.RowDefinitions>
-                                                                    <RowDefinition Height="Auto"/>
-                                                                    <RowDefinition Height="Auto"/>
-                                                                </Grid.RowDefinitions>
-                                                                <Border Grid.Row="0" Width="130" Grid.Column="0" Margin="5,1,5,1" Background="LightSteelBlue" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
-                                                                    <TextBlock Text="Uniform / Right (mm)" HorizontalAlignment="Center" 
-                                                                               ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
-                                                                </Border>
-                                                                <Border Grid.Row="0" Width="60" Grid.Column="1" Margin="5,1,5,1" Background="LightSteelBlue" HorizontalAlignment="Center" CornerRadius="5,5,5,5" ToolTip="If this is not defined the uniform margin will be used">
-                                                                    <TextBlock Text="Ant (mm)" HorizontalAlignment="Center" />
-                                                                </Border>
-                                                                <Border Grid.Row="0" Width="60" Grid.Column="2" Margin="5,1,5,1" Background="LightSteelBlue" HorizontalAlignment="Center" CornerRadius="5,5,5,5" ToolTip="If this is not defined the uniform margin will be used">
-                                                                    <TextBlock Text="Inf (mm)" HorizontalAlignment="Center" />
-                                                                </Border>
-                                                                <Border Grid.Row="0" Width="60" Grid.Column="3" Margin="5,1,5,1" Background="LightSteelBlue" HorizontalAlignment="Center" CornerRadius="5,5,5,5" ToolTip="If this is not defined the uniform margin will be used">
-                                                                    <TextBlock Text="Left (mm)" HorizontalAlignment="Center" />
-                                                                </Border>
-                                                                <Border Grid.Row="0" Width="60" Grid.Column="4" Margin="5,1,5,1" Background="LightSteelBlue" HorizontalAlignment="Center" CornerRadius="5,5,5,5" ToolTip="If this is not defined the uniform margin will be used">
-                                                                    <TextBlock Text="Post (mm)" HorizontalAlignment="Center" />
-                                                                </Border>
-                                                                <Border Grid.Row="0" Width="60" Grid.Column="5" Margin="5,1,5,1"  Background="LightSteelBlue" HorizontalAlignment="Center" CornerRadius="5,5,5,5" ToolTip="If this is not defined the uniform margin will be used">
-                                                                    <TextBlock Text="Sup (mm)" HorizontalAlignment="Center" />
-                                                                </Border>
-                                                                <TextBox Style="{StaticResource TextBoxStyle1}" Grid.Row="1" Width="50" Margin="0,2,0,0" Grid.Column="0" HorizontalAlignment="Center" HorizontalContentAlignment="Center"
-                                                                         Background="{Binding operatorParameterColor, UpdateSourceTrigger=PropertyChanged}"
-                                                                         Text="{Binding OperatorParameter, UpdateSourceTrigger=PropertyChanged}"   
-                                                                         ToolTip="{Binding operatorParameterError, UpdateSourceTrigger=PropertyChanged}"/>
-                                                                <TextBox Style="{StaticResource TextBoxStyle1}" Grid.Row="1" Width="50" Margin="0,2,0,0" Grid.Column="1" HorizontalAlignment="Center" HorizontalContentAlignment="Center" 
-                                                                         Text="{Binding OperatorParameter2, UpdateSourceTrigger=PropertyChanged}"   
-                                                                         Background="{Binding operatorParameter2Color, UpdateSourceTrigger=PropertyChanged}"
-                                                                         IsEnabled="{Binding OperatorParameter, Converter={StaticResource isMarginInternal}, UpdateSourceTrigger=PropertyChanged}"
-                                                                         ToolTip="{Binding operatorParameter2Error, UpdateSourceTrigger=PropertyChanged}"/>
-                                                                <TextBox Style="{StaticResource TextBoxStyle1}" Grid.Row="1" Width="50" Margin="0,2,0,0" Grid.Column="2" HorizontalAlignment="Center" HorizontalContentAlignment="Center" 
-                                                                         Text="{Binding OperatorParameter3, UpdateSourceTrigger=PropertyChanged}"   
-                                                                         Background="{Binding operatorParameter3Color, UpdateSourceTrigger=PropertyChanged}"
-                                                                         IsEnabled="{Binding OperatorParameter, Converter={StaticResource isMarginInternal}, UpdateSourceTrigger=PropertyChanged}"
-                                                                         ToolTip="{Binding operatorParameter3Error, UpdateSourceTrigger=PropertyChanged}"/>
-                                                                <TextBox Style="{StaticResource TextBoxStyle1}" Grid.Row="1" Width="50" Margin="0,2,0,0" Grid.Column="3" HorizontalAlignment="Center" HorizontalContentAlignment="Center" 
-                                                                         Text="{Binding OperatorParameter4, UpdateSourceTrigger=PropertyChanged}"   
-                                                                         Background="{Binding operatorParameter4Color, UpdateSourceTrigger=PropertyChanged}"
-                                                                         IsEnabled="{Binding OperatorParameter, Converter={StaticResource isMarginInternal}, UpdateSourceTrigger=PropertyChanged}"
-                                                                         ToolTip="{Binding operatorParameter4Error, UpdateSourceTrigger=PropertyChanged}"/>
-                                                                <TextBox Style="{StaticResource TextBoxStyle1}" Grid.Row="1" Width="50" Margin="0,2,0,0" Grid.Column="4" HorizontalAlignment="Center" HorizontalContentAlignment="Center" 
-                                                                         Text="{Binding OperatorParameter5, UpdateSourceTrigger=PropertyChanged}"   
-                                                                         Background="{Binding operatorParameter5Color, UpdateSourceTrigger=PropertyChanged}"
-                                                                         IsEnabled="{Binding OperatorParameter, Converter={StaticResource isMarginInternal}, UpdateSourceTrigger=PropertyChanged}"
-                                                                         ToolTip="{Binding operatorParameter5Error, UpdateSourceTrigger=PropertyChanged}"/>
-                                                                <TextBox Style="{StaticResource TextBoxStyle1}" Grid.Row="1" Width="50" Margin="0,2,0,0" Grid.Column="5" HorizontalAlignment="Center" HorizontalContentAlignment="Center" 
-                                                                         Text="{Binding OperatorParameter6, UpdateSourceTrigger=PropertyChanged}"   
-                                                                         Background="{Binding operatorParameter6Color, UpdateSourceTrigger=PropertyChanged}"
-                                                                         IsEnabled="{Binding OperatorParameter, Converter={StaticResource isMarginInternal}, UpdateSourceTrigger=PropertyChanged}"
-                                                                         ToolTip="{Binding operatorParameter6Error, UpdateSourceTrigger=PropertyChanged}"/>
-                                                            </Grid>
-                                                            <Grid Grid.Column="2" Visibility="{Binding Operator, Converter={StaticResource CropVisibilityConverter}}">
-                                                                <StackPanel Orientation="Horizontal" Margin="2,1,2,1">
-                                                                    <Border Background="LightSteelBlue" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
-                                                                        <StackPanel Orientation="Horizontal">
-                                                                            <TextBlock Margin="10,2,2,2" VerticalAlignment="Center" Text="Additional crop margin (mm):" ToolTip="The resulting structure will be cropped back from the target by this value."/>
-                                                                            <TextBox Style="{StaticResource TextBoxStyle1}" HorizontalAlignment="Center" Margin="3,2,10,2" Width="30" VerticalAlignment="Center" HorizontalContentAlignment="Center"
-                                                                                     Text="{Binding OperatorParameter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                                                     ToolTip="{Binding operatorParameterError, UpdateSourceTrigger=PropertyChanged}"
-                                                                                     Background="{Binding operatorParameterColor, UpdateSourceTrigger=PropertyChanged}"/>
-                                                                        </StackPanel>
-                                                                    </Border>
-                                                                    <Border Background="LightSteelBlue" HorizontalAlignment="Center" Margin="10,0,0,0" CornerRadius="5,5,5,5">
-                                                                        <StackPanel Orientation="Horizontal">
-                                                                            <TextBlock Margin="10,0,2,0" VerticalAlignment="Center" Text="Internal crop:" ToolTip="Check this to crop the resulting structure toward the interior of the target.&#013;Useful when creating eval structures, e.g. with 5 mm margin from BODY."/>
-                                                                            <CheckBox Style="{StaticResource CheckBoxStyle1}" HorizontalAlignment="Center" Margin="5,0,0,0" Width="20" VerticalAlignment="Center" HorizontalContentAlignment="Center" 
-                                                                                      IsChecked="{Binding OperatorParameter2, Converter={StaticResource BoolToString}, Mode=TwoWay}"/>
-                                                                        </StackPanel>
-                                                                    </Border>
-                                                                </StackPanel>
-                                                            </Grid>
-                                                        </Grid>
-                                                    </DataTemplate>
-                                                </ListView.ItemTemplate>
-                                            </ListView>
-
-                                        </Grid>
-                                    </Grid>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                    </ScrollViewer>
-                </Grid>
-            </Grid>
-
+            </Border>
         </Grid>
-        <Grid Grid.Row="2" Margin="20,0,20,0" Height="45" VerticalAlignment="Center" Grid.ColumnSpan="2">
+        <Grid Grid.Row="2" Margin="0,0,0,10">
+            <TabControl >
+                <TabItem Header="Structure Mapping" >
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="267*"/>
+                            <ColumnDefinition Width="782*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0" Margin="0,5,0,0" Height="25" Grid.ColumnSpan="2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="200"/>
+                                <ColumnDefinition Width="200"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" CornerRadius="5" Background="CornflowerBlue" >
+                                <Grid >
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock  Text="Template Structure" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" FontSize="12" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Style="{StaticResource ButtonStyle_Small}" Command="{Binding ActiveTemplate.AddTemplateStructureCommand}" Background="PapayaWhip" ToolTip="Add new structure" VerticalAlignment="Center" Margin="10,0,5,0">
+                                        <Image Source="Resources/plus_black.png" Stretch="Fill" />
+                                    </Button>
+                                </Grid>
+                            </Border>
+                            <Border Grid.Column="1" CornerRadius="5" Background="CornflowerBlue" Margin="5,0,5,0">
+                                <TextBlock  Text="Mapped Eclipse Structure" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" FontSize="12" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+                        <Grid Grid.Row="1" Margin="0,5,0,0" Height="25" Grid.ColumnSpan="2">
+                            <TextBlock Text="When generating new structures, OptiMate v2.0 uses Template Structures to reference contours in Eclipse for operations. Use the list below to confirm the mapping for this patient/structure set." FontStyle="Italic" FontSize="13" Margin="5,0,0,0"/>
+                        </Grid>
+                        <Grid Grid.Row="2" Grid.ColumnSpan="2">
+                            <ScrollViewer Margin="0,5,0,5" Focusable="true" VerticalAlignment="Stretch" VerticalScrollBarVisibility="Auto" PreviewMouseWheel="ScrollViewer_PreviewMouseWheel"
+                                          Template="{DynamicResource ScrollViewerControlTemplate1}" CanContentScroll="True" Background="Transparent" Visibility="{Binding ProtocolVisibility, UpdateSourceTrigger=PropertyChanged}">
+                                <ListView Style="{StaticResource ListViewStyle1}" ItemContainerStyle="{StaticResource DraggableListViewItemStyle}" AlternationCount="2" 
+                                          ItemsSource="{Binding ActiveTemplate.TemplateStructuresVM, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanLoadTemplates, UpdateSourceTrigger=PropertyChanged}" SelectionChanged="ListView_SelectionChanged" >
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="200"/>
+                                                    <ColumnDefinition Width="200"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Grid Grid.Column="0">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="160"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid Grid.Column="0">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Grid Grid.Column="0">
+                                                            <Button Style="{StaticResource ButtonStyle_Small}" Command="{Binding DataContext.ActiveTemplate.RemoveTemplateStructureCommand, ElementName=MainScriptWindow}" ToolTip="Remove structure"
+                                           HorizontalAlignment="Left" CommandParameter="{Binding}" VerticalAlignment="Center" Margin="3,0,0,0" Validation.ErrorTemplate="{x:Null}">
+                                                                <Image Source="Resources/x.png" Stretch="Fill" />
+                                                            </Button>
+                                                        </Grid>
+                                                        <Grid Grid.Column="1" Margin="10,0,0,0">
+                                                            <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <TextBlock Text="{Binding TemplateStructureId}" HorizontalAlignment="Center" FontWeight="DemiBold" FontSize="14" VerticalAlignment="Bottom" Margin="5,0,0,0" 
+                                                   Visibility="{Binding isNew, Converter={StaticResource VisibilityInverseConverter}}"/>
+                                                                    <TextBox Text="{Binding TemplateStructureId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="1,1,1,1" HorizontalAlignment="Center" FontWeight="DemiBold" FontSize="14" VerticalAlignment="Bottom" MinWidth="100" MaxWidth="130"
+                                                  Visibility="{Binding isNew, Converter={StaticResource VisibilityConverter}}" Background="{Binding StructureIdColor, UpdateSourceTrigger=PropertyChanged,FallbackValue=Orange}"/>
+                                                                </StackPanel>
+                                                            </StackPanel>
+                                                        </Grid>
+                                                    </Grid>
+                                                </Grid>
+                                                <Grid Grid.Column ="1" >
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <ComboBox Grid.Column="0" SelectedItem="{Binding SelectedEclipseStructure, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource OptiStructureComboBoxStyle}"
+                                            Template="{DynamicResource OptiComboBoxControlTemplate}" HorizontalAlignment="Center" VerticalAlignment="Center" MinWidth="150" DisplayMemberPath="EclipseId" Background="{Binding MappedStructureWarningColor, UpdateSourceTrigger=PropertyChanged}">
+                                                        <ComboBox.ItemsSource>
+                                                            <MultiBinding Converter="{StaticResource SortStructuresConverter}">
+                                                                <Binding Path="PrincipalAlias"  UpdateSourceTrigger="PropertyChanged" />
+                                                                <Binding Path="EclipseIds" UpdateSourceTrigger="PropertyChanged" />
+                                                            </MultiBinding>
+                                                        </ComboBox.ItemsSource>
+                                                        <ComboBox.ItemContainerStyle>
+                                                            <Style TargetType="{x:Type ComboBoxItem}">
+                                                                <Setter Property="Foreground" Value="{Binding EclipseIdColor, UpdateSourceTrigger=PropertyChanged}"/>
+                                                            </Style>
+                                                        </ComboBox.ItemContainerStyle>
+                                                    </ComboBox>
+                                                    <controls:WarningControl Grid.Column="1" Height="24" Width="25" Margin="3,0,0,0" Padding="2,2,2,2" ToolTip="Mapping has been modified." Visibility="{Binding WarningVisibilityDoesNotUseAlias, UpdateSourceTrigger=PropertyChanged}"/>
+                                                    <controls:WarningControl Grid.Column="1" Height="24" Width="25" Margin="3,0,0,0" Padding="2,2,2,2" ToolTip="Mapped structure is empty" Visibility="{Binding WarningVisibilityMappedStructureEmpty, UpdateSourceTrigger=PropertyChanged}"/>
+                                                </Grid>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+                            </ScrollViewer>
+                        </Grid>
+                    </Grid>
+                </TabItem>
+                <TabItem Header="Generated Structures" Height="34" VerticalAlignment="Top">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0" Margin="0,5,0,0" Visibility="{Binding ProtocolVisibility, UpdateSourceTrigger=PropertyChanged}" Height="25" >
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="200"/>
+                                <ColumnDefinition Width="220"/>
+                                <ColumnDefinition Width="170"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" CornerRadius="5" Background="CornflowerBlue">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Generated Structure" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" FontSize="12" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Style="{StaticResource ButtonStyle_Small}" Command="{Binding ActiveTemplate.AddGeneratedStructureCommand}" Background="PapayaWhip" ToolTip="Add new structure" VerticalAlignment="Center" Margin="0,0,5,0">
+                                        <Image Source="Resources/plus_black.png" Stretch="Fill" />
+                                    </Button>
+                                </Grid>
+                            </Border>
+                            <Border Grid.Column="1" CornerRadius="5" Background="CornflowerBlue" Margin="5,0,5,0">
+                                <TextBlock Text="Operator" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <Border Grid.Column="2" CornerRadius="5" Background="CornflowerBlue" Margin="5,0,5,0">
+                                <TextBlock Text="Template Structure" Foreground="White"  FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <Border Grid.Column="3" CornerRadius="5" Background="CornflowerBlue" Margin="5,0,5,0">
+                                <TextBlock Text="Operator Options" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+                        <Grid Grid.Row="1" Visibility="{Binding ProtocolVisibility, UpdateSourceTrigger=PropertyChanged}">
+                            <ScrollViewer Margin="0,0,0,0" Focusable="true" VerticalAlignment="Stretch" VerticalScrollBarVisibility="Auto" PreviewMouseWheel="ScrollViewer_PreviewMouseWheel"
+                                          Template="{DynamicResource ScrollViewerControlTemplate1}" CanContentScroll="True" Background="Transparent" Visibility="{Binding ProtocolVisibility, UpdateSourceTrigger=PropertyChanged}">
+                                <ListView Style="{StaticResource ListViewStyle1}" ItemContainerStyle="{StaticResource DraggableListViewItemStyle}" AlternationCount="2" 
+                                          ItemsSource="{Binding ActiveTemplate.GeneratedStructuresVM, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanLoadTemplates, UpdateSourceTrigger=PropertyChanged}" SelectionChanged="ListView_SelectionChanged" >
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="200"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Grid Grid.Column="0">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid Grid.Column="0">
+                                                        <Button Style="{StaticResource ButtonStyle_Small}" Command="{Binding DataContext.ActiveTemplate.RemoveGeneratedStructureCommand, ElementName=MainScriptWindow}" ToolTip="Remove structure"
+                                                               HorizontalAlignment="Left" CommandParameter="{Binding}" VerticalAlignment="Center" Margin="3,0,0,0">
+                                                            <Image Source="Resources/x.png" Stretch="Fill" />
+                                                        </Button>
+                                                    </Grid>
+                                                    <Grid Grid.Column="1" Margin="10,0,0,5">
+                                                        <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="{Binding StructureId}" HorizontalAlignment="Center" FontWeight="bold" FontSize="14" VerticalAlignment="Bottom" Margin="5,0,0,0"
+                                             Visibility="{Binding isNew, Converter={StaticResource VisibilityInverseConverter}}"/>
+                                                                <TextBox Text="{Binding StructureId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,5,0,0" Padding="1,1,1,1" HorizontalAlignment="Center" FontWeight="bold" FontSize="14" VerticalAlignment="Bottom" MinWidth="100" MaxWidth="130"
+                                             Visibility="{Binding isNew, Converter={StaticResource VisibilityConverter}}" Background="{Binding StructureIdColor, UpdateSourceTrigger=PropertyChanged,FallbackValue=Orange}"
+                                                             ToolTip="{Binding structureIdError, UpdateSourceTrigger=PropertyChanged}"/>
+                                                            </StackPanel>
+                                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5,0,0">
+                                                                <TextBlock Text="High Resolution" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                                                <CheckBox FontSize="10" Style="{StaticResource CheckBoxStyle1}" HorizontalAlignment="Left" Margin="5,0,0,0"
+                                                IsChecked="{Binding isHighResolution, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                            ToolTip="Toggles high resolution. If any of the operator targets are HR then this option will be ignored to allow the operation and the resulting structure will be HR."/>
+                                                            </StackPanel>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Grid>
+                                                <Grid Grid.Column="1" >
+                                                    <ListView Style="{StaticResource ListViewStyle1}" ItemContainerStyle="{StaticResource DraggableListViewItemStyle}" 
+                                            ItemsSource="{Binding InstructionViewModels, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" HorizontalAlignment="Left">
+                                                        <ListView.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Grid Background="Transparent" Margin="10,3,0,3">
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="200"/>
+                                                                        <ColumnDefinition Width="170"/>
+                                                                        <ColumnDefinition Width="*"/>
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <Grid Grid.Column="0" >
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                            <ColumnDefinition Width="*"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <TextBlock Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-3,0,0" ToolTip="Instructions execute in this order" Validation.ErrorTemplate="{x:Null}">
+                                                                            <TextBlock.Text>
+                                                                                <MultiBinding Converter="{StaticResource InstructionNumberConverter}" UpdateSourceTrigger="PropertyChanged">
+                                                                                    <Binding/>
+                                                                                    <Binding Path="DataContext.InstructionViewModels" UpdateSourceTrigger="PropertyChanged">
+                                                                                        <Binding.RelativeSource>
+                                                                                            <RelativeSource Mode="FindAncestor" AncestorType="ListView" />
+                                                                                        </Binding.RelativeSource>
+                                                                                    </Binding>
+                                                                                </MultiBinding>
+                                                                            </TextBlock.Text>
+                                                                        </TextBlock>
+                                                                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                                            <ComboBox Grid.Column="1" SelectedItem="{Binding SelectedOperator, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Template="{DynamicResource OptiComboBoxControlTemplate}" Background="{Binding OperatorBackgroundColor, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource OptiStructureComboBoxStyle}"
+                                                                                      HorizontalAlignment="Left" VerticalAlignment="Center" Margin="5,0,0,0">
+                                                                                <ComboBox.ItemTemplate>
+                                                                                    <DataTemplate>
+                                                                                        <TextBlock Text="{Binding Converter={StaticResource ConvertToOperatorName}}" />
+                                                                                    </DataTemplate>
+                                                                                </ComboBox.ItemTemplate>
+                                                                                <ComboBox.ItemsSource>
+                                                                                    <MultiBinding Converter="{StaticResource AvailableOperators}">
+                                                                                        <Binding Path="Operators" UpdateSourceTrigger="PropertyChanged" />
+                                                                                        <Binding Path="DataContext" RelativeSource="{RelativeSource AncestorLevel=2, AncestorType=ListViewItem}" UpdateSourceTrigger="PropertyChanged" />
+                                                                                        <Binding/>
+                                                                                    </MultiBinding>
+                                                                                </ComboBox.ItemsSource>
+                                                                            </ComboBox>
+                                                                            <controls:WarningControl Grid.Column="2" Visibility="{Binding WarningVisibility_OperatorChanged}" Height="24" Width="25" Margin="3,0,0,0" Padding="2,2,2,2" ToolTip="Instruction is new or has been modified"/>
+                                                                        </StackPanel>
+
+
+                                                                        <Button Grid.Column="2" Style="{StaticResource ButtonStyle_Small}" Command="{Binding DataContext.RemoveInstructionCommand, RelativeSource={RelativeSource AncestorLevel=2, AncestorType=ListViewItem}}" ToolTip="Remove instruction"
+                                                              HorizontalAlignment="Right" Visibility="{Binding DeleteButtonVisibiilty, UpdateSourceTrigger=PropertyChanged}" Validation.ErrorTemplate="{x:Null}">
+                                                                            <Button.CommandParameter>
+                                                                                <MultiBinding Converter="{StaticResource InstructionCommandParameterConverter}">
+                                                                                    <Binding/>
+                                                                                    <Binding Path="DataContext">
+                                                                                        <Binding.RelativeSource>
+                                                                                            <RelativeSource Mode="FindAncestor" AncestorType="ListViewItem" AncestorLevel="2"/>
+                                                                                        </Binding.RelativeSource>
+                                                                                    </Binding>
+                                                                                </MultiBinding>
+                                                                            </Button.CommandParameter>
+                                                                            <Image Source="Resources/x.png" Stretch="Fill" />
+                                                                        </Button>
+                                                                        <Button Grid.Column="3" Style="{StaticResource ButtonStyle_Small}" Command="{Binding DataContext.AddInstructionCommand, RelativeSource={RelativeSource AncestorLevel=2, AncestorType=ListViewItem}}" ToolTip="Add new instruction following"
+                                                               HorizontalAlignment="Right"  Margin="0,0,0,0" Validation.ErrorTemplate="{x:Null}">
+                                                                            <Button.CommandParameter>
+                                                                                <MultiBinding Converter="{StaticResource InstructionCommandParameterConverter}">
+                                                                                    <Binding/>
+                                                                                    <Binding Path="DataContext">
+                                                                                        <Binding.RelativeSource>
+                                                                                            <RelativeSource Mode="FindAncestor" AncestorType="ListViewItem" AncestorLevel="2"/>
+                                                                                        </Binding.RelativeSource>
+                                                                                    </Binding>
+                                                                                </MultiBinding>
+                                                                            </Button.CommandParameter>
+                                                                            <TextBlock Text="..." />
+                                                                        </Button>
+                                                                    </Grid>
+                                                                    <StackPanel Grid.Column="1" HorizontalAlignment="Stretch"  Margin="10,0,0,0" Orientation="Horizontal" Visibility="{Binding VisibilityTargetSelection, UpdateSourceTrigger=PropertyChanged}">
+                                                                        <ComboBox ToolTip="{Binding DefaultTemplateStructureId, UpdateSourceTrigger=PropertyChanged}" Background="{Binding TargetTemplateBackgroundColor, UpdateSourceTrigger=PropertyChanged}"
+                                                                              ItemsSource="{Binding TargetTemplateIds}" Template="{StaticResource OptiComboBoxControlTemplate}"  Style="{StaticResource OptiStructureComboBoxStyle}"  PreviewMouseWheel="ScrollViewer_PreviewMouseWheel" SelectedItem="{Binding TargetTemplateStructureId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" HorizontalContentAlignment="Center"  VerticalContentAlignment="Center" Margin="0,0,0,0" VerticalAlignment="Center">
+                                                                        </ComboBox>
+                                                                        <controls:WarningControl Visibility="{Binding WarningVisibility_TargetChanged}" Height="24" Width="25" Margin="3,0,0,0" Padding="2,2,2,2" ToolTip="Template target has changed" HorizontalAlignment="Left"/>
+                                                                    </StackPanel>
+                                                                    <Grid Grid.Column="2" Margin="10,0,0,0" Visibility="{Binding SelectedOperator, Converter={StaticResource AsymmetricMarginVisibilityConverter}}">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <Border  Width="70" Grid.Column="0" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                            <StackPanel Orientation="Vertical">
+                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                    <TextBlock Text="Right (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
+                                                                                </Border>
+                                                                                <TextBox Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center"  
+                                                                                         Text="{Binding RightMargin, UpdateSourceTrigger=PropertyChanged}" />
+                                                                            </StackPanel>
+                                                                        </Border>
+                                                                        <Border  Width="70" Grid.Column="1" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                            <StackPanel Orientation="Vertical">
+                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                    <TextBlock Text="Left (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
+                                                                                </Border>
+                                                                                <TextBox Text="{Binding LeftMargin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center"/>
+                                                                            </StackPanel>
+                                                                        </Border>
+                                                                        <Border Width="70" Grid.Column="2" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                            <StackPanel Orientation="Vertical">
+                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                    <TextBlock Text="Ant (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
+                                                                                </Border>
+                                                                                <TextBox Text="{Binding AntMargin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center" />
+                                                                            </StackPanel>
+                                                                        </Border>
+                                                                        <Border  Width="70" Grid.Column="3" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                            <StackPanel Orientation="Vertical">
+                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                    <TextBlock Text="Post (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
+                                                                                </Border>
+                                                                                <TextBox Text="{Binding AntMargin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center"/>
+                                                                            </StackPanel>
+                                                                        </Border>
+                                                                        <Border Width="70" Grid.Column="4" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                            <StackPanel Orientation="Vertical">
+                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                    <TextBlock Text="Sup (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
+                                                                                </Border>
+                                                                                <TextBox Text="{Binding SupMargin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center" />
+                                                                            </StackPanel>
+                                                                        </Border>
+                                                                        <Border  Width="70" Grid.Column="5" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                            <StackPanel Orientation="Vertical">
+                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                    <TextBlock Text="Inf (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
+                                                                                </Border>
+                                                                                <TextBox Text="{Binding InfMargin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center" />
+                                                                            </StackPanel>
+                                                                        </Border>
+                                                                        <Border Width="70" Grid.Column="5" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                            <StackPanel Orientation="Vertical">
+                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                    <TextBlock Text="Inf (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
+                                                                                </Border>
+                                                                                <TextBox Text="{Binding InfMargin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+                                                                            </StackPanel>
+                                                                        </Border>
+                                                                        <Border Width="90" Grid.Column="6" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                            <StackPanel Orientation="Vertical">
+                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                    <TextBlock Text="Margin Type" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
+                                                                                </Border>
+                                                                                <ComboBox SelectedItem="{Binding SelectedMargin, UpdateSourceTrigger=PropertyChanged}" ItemsSource="{Binding MarginTypeOptions}" Style="{StaticResource OptiStructureComboBoxStyle2}" Template="{StaticResource OptiComboBoxControlTemplate}" Grid.Row="1" Width="70" Margin="0,2,0,2" Grid.Column="6" HorizontalAlignment="Center" HorizontalContentAlignment="Center"
+          />
+                                                                            </StackPanel>
+                                                                        </Border>
+                                                                    </Grid>
+                                                                    <Grid Grid.Column="2" Visibility="{Binding SelectedOperator, Converter={StaticResource CropVisibilityConverter}}">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <Border Width="100" Grid.Column="0" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                            <StackPanel Orientation="Vertical">
+                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                    <TextBlock Text="Crop Offset (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
+                                                                                </Border>
+                                                                                <TextBox Text="{Binding IsoCropOffset, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
+                                                                            </StackPanel>
+                                                                        </Border>
+                                                                        <Border Width="90" Grid.Column="1" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                            <StackPanel Orientation="Vertical">
+                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                    <TextBlock Text="Internal Crop" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
+                                                                                </Border>
+                                                                                <CheckBox IsChecked="{Binding InternalCrop, Mode=TwoWay}" Style="{StaticResource CheckBoxStyle1}" HorizontalAlignment="Center" Margin="5,5,0,0" Width="25" VerticalAlignment="Center" HorizontalContentAlignment="Center" />
+                                                                            </StackPanel>
+                                                                        </Border>
+                                                                    </Grid>
+                                                                    <Grid Grid.Column="2" Visibility="{Binding SelectedOperator, Converter={StaticResource MarginVisibilityConverter}}">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <Border Width="100" Grid.Column="0" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                            <StackPanel Orientation="Vertical">
+                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                    <TextBlock Text="Isotropic (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
+                                                                                </Border>
+                                                                                <TextBox Text="{Binding IsoMargin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
+                                                                            </StackPanel>
+                                                                        </Border>
+                                                                        <Border Width="90" Grid.Column="1" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                            <StackPanel Orientation="Vertical">
+                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                    <TextBlock Text="Margin Type" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
+                                                                                </Border>
+                                                                                <ComboBox SelectedItem="{Binding SelectedMargin, UpdateSourceTrigger=PropertyChanged}" ItemsSource="{Binding MarginTypeOptions}" Style="{StaticResource OptiStructureComboBoxStyle2}" Template="{StaticResource OptiComboBoxControlTemplate}" Grid.Row="1" Width="70" Margin="0,2,0,2" Grid.Column="6" HorizontalAlignment="Center" HorizontalContentAlignment="Center"
+/>
+                                                                            </StackPanel>
+                                                                        </Border>
+                                                                    </Grid>
+                                                                </Grid>
+                                                            </DataTemplate>
+                                                        </ListView.ItemTemplate>
+                                                    </ListView>
+
+                                                </Grid>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+                            </ScrollViewer>
+                        </Grid>
+                    </Grid>
+                </TabItem>
+            </TabControl>
+        </Grid>
+        <Grid Grid.Row="3" Margin="0,0,0,0"  VerticalAlignment="Center" Grid.ColumnSpan="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <Grid Grid.Column="0">
-                <Popup Visibility="Visible" PlacementTarget="{Binding ElementName=ProgressBar}" StaysOpen="False" Placement="Top" HorizontalOffset="200" AllowsTransparency="True" IsOpen="{Binding ReviewWarningsPopupVisibility, UpdateSourceTrigger=PropertyChanged, FallbackValue=True}">
-                    <local:ReviewWarningsPopup MinHeight="35" Height="Auto" DataContext="{Binding ReviewWarningsVM}"/>
-                </Popup>
                 <ProgressBar Name="ProgressBar" Height="30" Margin="30,0,30,0" HorizontalAlignment="Stretch" Template="{StaticResource ProgressBarNC}" IsIndeterminate="True" 
                 Visibility="{Binding Working,UpdateSourceTrigger=PropertyChanged, Converter={StaticResource VisibilityConverter}}" />
                 <TextBlock Text="{Binding WaitMessage, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" HorizontalAlignment="Center" 
@@ -1156,21 +1432,35 @@
                 <Border Grid.Column="0" Visibility="{Binding ScriptDone, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource VisibilityConverter}}" CornerRadius="7,7,7,7" Margin="30,0,30,0"
                             HorizontalAlignment="Stretch"
                             BorderBrush="{Binding ScriptCompletionStatusColour}" Grid.ColumnSpan="3" BorderThickness="3">
-                    <Button Command="{Binding ToggleWarningVisibilityCommand}" Background="Transparent" Style="{StaticResource ButtonStyle_Fit}" IsEnabled="{Binding Errors, UpdateSourceTrigger=PropertyChanged}">
-                        <TextBlock Text="{Binding StatusMessage, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Background="Transparent"
-                                   Foreground="Black"  FontSize="13" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                    </Button>
+                    <Grid>
+                        <Popup Visibility="Visible" PlacementTarget="{Binding ElementName=ViewCompletionWarnings}" Width="800" StaysOpen="False" Placement="Top" HorizontalOffset="-100" AllowsTransparency="True" IsOpen="{Binding ReviewWarningsPopupVisibility, UpdateSourceTrigger=PropertyChanged, FallbackValue=True}">
+                            <views:DescriptionView MinHeight="35" Height="Auto" DataContext="{Binding ReviewCompletionWarningsVM}" Width="800"/>
+                        </Popup>
+                        <Button Command="{Binding ReviewCompletionWarnignsCommand}" Background="Transparent" Style="{StaticResource ButtonStyle_Fit}" IsEnabled="{Binding HasCompletionWarnings, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBlock Text="Structure generation completed with warnings. Click to review." Background="Transparent" Name="ViewCompletionWarnings" Visibility="{Binding HasCompletionWarnings, Converter={StaticResource VisibilityConverter}}"
+                  Foreground="Black"  FontSize="13" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Button>
+                        <TextBlock Text="Structure generation completed!" Background="Transparent" Visibility="{Binding HasCompletionWarnings, Converter={StaticResource VisibilityInverseConverter}}"
+                            Foreground="Black"  FontSize="13" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </Grid>
                 </Border>
             </Grid>
-            <Grid Grid.Column="1" ToolTip="{Binding StartButtonTooltip}">
+            <Grid Grid.Column="1">
+                <Popup Visibility="Visible" PlacementTarget="{Binding ElementName=InputWarningsInfoButton}" StaysOpen="False" Placement="Top" HorizontalOffset="-460"  AllowsTransparency="True" IsOpen="{Binding ReviewInputValidationPopupVisibility, UpdateSourceTrigger=PropertyChanged, FallbackValue=True}">
+                    <views:DescriptionView MinHeight="35" Height="Auto" Width ="500" DataContext="{Binding ReviewInputValidationVM}"/>
+                </Popup>
+                <Button HorizontalAlignment="Center" Style="{StaticResource ButtonStyle_Small}" Width="35" Height="35" Command="{Binding ShowValidationErrorsCommand}"  
+                        Visibility="{Binding allInputsValid, Converter={StaticResource VisibilityInverseConverter},UpdateSourceTrigger=PropertyChanged}"
+                            Margin="2,1,2,1" Validation.ErrorTemplate="{x:Null}" Name="InputWarningsInfoButton">
+                    <Image Source="Resources/circle-info-solid.png" Height="20" Width="20" Margin="0,0,0,0"/>
+                </Button>
+
+            </Grid>
+            <Grid Grid.Column="2">
                 <Button HorizontalAlignment="Center" Style="{StaticResource ButtonStyle_Highlight}" Width="175" Command="{Binding StartCommand}" 
                         Visibility="{Binding IsErrorAcknowledged, Converter={StaticResource VisibilityConverter},UpdateSourceTrigger=PropertyChanged}"
-                            IsEnabled="{Binding allInputsValid, UpdateSourceTrigger=PropertyChanged,ValidatesOnDataErrors=True}" Margin="2,1,2,1">
+                            IsEnabled="{Binding allInputsValid, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Margin="2,1,2,1" Validation.ErrorTemplate="{x:Null}">
                     <TextBlock Text="{Binding StartButtonText, UpdateSourceTrigger=PropertyChanged}" FontSize="16" FontWeight="bold"/>
-                </Button>
-                <!--</Border>-->
-                <Button HorizontalAlignment="Center"  Style="{DynamicResource ButtonStyle_Highlight}" Margin="2,1,2,1" Width="175" Command="{Binding ContinueCommand}" Visibility="{Binding IsErrorAcknowledged, Converter={StaticResource VisibilityInverseConverter},UpdateSourceTrigger=PropertyChanged}">
-                    <TextBlock Text="Continue" FontSize="16" FontWeight="bold"/>
                 </Button>
             </Grid>
         </Grid>
