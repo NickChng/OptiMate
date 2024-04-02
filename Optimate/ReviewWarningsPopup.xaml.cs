@@ -15,7 +15,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 
-namespace Optimate
+namespace OptiMate
 {
     /// <summary>
     /// Interaction logic for HorizontalPopup.xaml

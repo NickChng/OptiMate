@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
-namespace Optimate
+namespace OptiMate
 {
     public class DelegateCommand : ICommand
     {

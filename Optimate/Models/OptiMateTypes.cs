@@ -6,6 +6,20 @@ using System.Threading.Tasks;
 
 namespace OptiMate.Models
 {
+
+    public enum SaveToPersonalResult
+    {
+        Success,
+        Failure,
+        Cancelled
+    }
+    public enum InstructionCompletionStatus
+    {
+        Pending,
+        Completed,
+        CompletedWithWarning,
+        Failed
+    }
     public enum DICOMTypes
     {
         CONTROL,

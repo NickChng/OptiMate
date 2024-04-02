@@ -1,5 +1,5 @@
-﻿using Optimate;
-using Optimate.ViewModels;
+﻿using OptiMate;
+using OptiMate.ViewModels;
 using OptiMate.Models;
 using Prism.Events;
 using System;
@@ -10,6 +10,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using OptiMate.Logging;
+using OptiMate.Controls;
+using System.Windows.Input;
 
 namespace OptiMate.ViewModels
 {
@@ -18,7 +21,7 @@ namespace OptiMate.ViewModels
         private MainModel _model;
         private TemplateStructure _templateStructure;
         private IEventAggregator _ea;
-        public class TemplateStructureIdChanged : PubSubEvent<string> { }
+        
         public ObservableCollection<EclipseStructureViewModel> EclipseIds { get; set; } = new ObservableCollection<EclipseStructureViewModel>()
         {
             new EclipseStructureViewModel(){EclipseId = "DesignEclipseId1" },
@@ -27,6 +30,7 @@ namespace OptiMate.ViewModels
 
         public ObservableCollection<string> Aliases { get; private set; } = new ObservableCollection<string>();
 
+        public EditControlViewModel EditControlVM { get; set; }
         public string PrincipalAlias
         {
             get
@@ -50,11 +54,10 @@ namespace OptiMate.ViewModels
             }
             set
             {
-                if (_model.IsTemplateStructureIdValid(value))
+                if (_model.IsNewTemplateStructureIdValid(value))
                 {
-                    _templateStructure.TemplateStructureId = value;
+                    _model.RenameTemplateStructure(_templateStructure.TemplateStructureId, value);
                     RaisePropertyChangedEvent(nameof(StructureIdColor));
-                    _ea.GetEvent<TemplateStructureIdChanged>().Publish(value);
                 }
             }
         }
@@ -116,7 +119,7 @@ namespace OptiMate.ViewModels
                 {
                     return Visibility.Collapsed;
                 }
-                if (Aliases.Contains(SelectedEclipseStructure.EclipseId, StringComparer.OrdinalIgnoreCase) || isNew)
+                if (isAnAlias(SelectedEclipseStructure.EclipseId))
                 {
                     return Visibility.Collapsed;
                 }
@@ -126,6 +129,8 @@ namespace OptiMate.ViewModels
                 }
             }
         }
+
+        public bool ConfirmRemoveStructurePopupVisibility { get; set; }= false;
 
         public Visibility WarningVisibilityMappedStructureEmpty
         {
@@ -179,6 +184,15 @@ namespace OptiMate.ViewModels
             {
                 _ea.GetEvent<DataValidationRequiredEvent>().Publish();
             };
+            _ea.GetEvent<TemplateStructureIdChangedEvent>().Subscribe(OnTemplateStructureIdChanged);
+        }
+
+        private void OnTemplateStructureIdChanged(TemplateStructureIdChangedEventInfo info)
+        {
+            if (string.Equals(info.NewId, TemplateStructureId, StringComparison.OrdinalIgnoreCase))
+            {
+                RaisePropertyChangedEvent(nameof(TemplateStructureId));
+            }
         }
 
         private void OnNewTemplateStructure(NewTemplateStructureEventInfo info)
@@ -206,7 +220,7 @@ namespace OptiMate.ViewModels
         {
             foreach (var eclipseId in EclipseIds.Select(x => x.EclipseId))
             {
-                if (Aliases.Select(x => x.CompactForm().ToUpper()).Contains(eclipseId.CompactForm().ToUpper()))
+                if (isAnAlias(eclipseId))
                 {
                     SelectedEclipseStructure = EclipseIds.FirstOrDefault(x => x.EclipseId == eclipseId);
                 }
@@ -214,6 +228,18 @@ namespace OptiMate.ViewModels
             if (SelectedEclipseStructure == null)
             {
                 AddError(nameof(SelectedEclipseStructure), $"No alias for template structure {TemplateStructureId} was found in the structure set.");
+            }
+        }
+
+        private bool isAnAlias(string alias)
+        {
+            if (Aliases.Select(x=>x.CompactForm()).Contains(alias.CompactForm(), StringComparer.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
             }
         }
 
@@ -242,5 +268,33 @@ namespace OptiMate.ViewModels
             _templateStructure = new TemplateStructure() { TemplateStructureId = "DesignTemplateId", Alias = new string[] { "DesignAlias" } };
         }
 
+        private bool _editTemplateStructurePopupVisibility = false;
+        public bool EditTemplateStructurePopupVisibility 
+        {
+            get
+            {
+                return _editTemplateStructurePopupVisibility;
+            }
+            set
+            {
+                _editTemplateStructurePopupVisibility = value;
+                _ea.GetEvent<LockingPopupEvent>().Publish(value);
+            }
+        }
+
+        public ICommand EditTemplateStructureCommand
+        {
+            get
+            {
+                return new DelegateCommand(EditTemplateStructure);
+            }
+        }
+
+        private void EditTemplateStructure(object obj)
+        {
+            string templateStructureId = obj as string;
+            EditTemplateStructurePopupVisibility ^= true;
+            EditControlVM = new EditControlViewModel(templateStructureId, _model.GetTemplateStructureAliases(templateStructureId), _model, _ea);
+        }
     }
 }

@@ -13,42 +13,19 @@ using Serilog;
 using System.Diagnostics;
 using OptiMate.ViewModels;
 
-namespace Optimate
+namespace OptiMate
 {
 
     public static class Helpers
     {
-        public static class SeriLog
+        public static string MakeStringPathSafe(string user)
         {
-            public static void Initialize(string user = "RunFromLauncher")
+            string pathSafeUser = user;
+            foreach (char c in Path.GetInvalidFileNameChars())
             {
-                var SessionTimeStart = DateTime.Now;
-                var AssemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                var directory = Path.Combine(AssemblyPath, @"Logs");
-                var logpath = Path.Combine(directory, string.Format(@"log_{0}_{1}_{2}.txt", SessionTimeStart.ToString("dd-MMM-yyyy"), SessionTimeStart.ToString("hh-mm-ss"), user.Replace(@"\", @"_")));
-                Log.Logger = new LoggerConfiguration().WriteTo.File(logpath, Serilog.Events.LogEventLevel.Information,
-                    "{Timestamp:dd-MMM-yyy HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}").CreateLogger();
+                pathSafeUser = pathSafeUser.Replace(c, '_');
             }
-            public static void AddLog(string log_info)
-            {
-                Log.Information(log_info);
-
-            }
-            public static void AddWarning(string log_info)
-            {
-                Log.Warning(log_info);
-            }
-            public static void AddError(string log_info, Exception ex = null)
-            {
-                if (ex == null)
-                    Log.Error(log_info);
-                else
-                    Log.Error(ex, log_info);
-            }
-            public static void AddFatal(string log_info, Exception ex)
-            {
-                Log.Fatal(ex, log_info);
-            }
+            return pathSafeUser;
         }
         public static class LevenshteinDistance
         {
@@ -106,18 +83,20 @@ namespace Optimate
         {
             switch (operatorType)
             {
-                case OperatorTypes.copy:
-                    return "Copy";
+                case OperatorTypes.convertResolution:
+                    return "High Res.";
                 case OperatorTypes.margin:
                     return "Margin";
                 case OperatorTypes.asymmetricMargin:
-                    return "Asym. Margin";
+                    return "Asym.Margin";
                 case OperatorTypes.or:
                     return "Or";
                 case OperatorTypes.and:
                     return "And";
                 case OperatorTypes.crop:
                     return "Crop";
+                case OperatorTypes.asymmetricCrop:
+                    return "Asym.Crop";
                 case OperatorTypes.sub:
                     return "Sub";
                 case OperatorTypes.subfrom:
@@ -137,18 +116,27 @@ namespace Optimate
 
         public static class OrientationInvariantMargins
         {
-            public static AxisAlignedMargins getAxisAlignedMargins(PatientOrientation patientOrientation, double rightMargin, double antMargin, double infMargin, double leftMargin, double postMargin, double supMargin)
+            public static AxisAlignedMargins getAxisAlignedMargins(PatientOrientation patientOrientation, MarginTypes marginType, double rightMargin, double antMargin, double infMargin, double leftMargin, double postMargin, double supMargin)
             {
+                StructureMarginGeometry geometry;
+                if (marginType == MarginTypes.Inner)
+                {
+                    geometry = StructureMarginGeometry.Inner;
+                }
+                else
+                {
+                    geometry = StructureMarginGeometry.Outer;
+                }
                 switch (patientOrientation)
                 {
                     case PatientOrientation.HeadFirstSupine:
-                        return new AxisAlignedMargins(StructureMarginGeometry.Outer, rightMargin, antMargin, infMargin, leftMargin, postMargin, supMargin);
+                        return new AxisAlignedMargins(geometry, rightMargin, antMargin, infMargin, leftMargin, postMargin, supMargin);
                     case PatientOrientation.HeadFirstProne:
-                        return new AxisAlignedMargins(StructureMarginGeometry.Outer, leftMargin, postMargin, infMargin, rightMargin, antMargin, supMargin);
+                        return new AxisAlignedMargins(geometry, leftMargin, postMargin, infMargin, rightMargin, antMargin, supMargin);
                     case PatientOrientation.FeetFirstSupine:
-                        return new AxisAlignedMargins(StructureMarginGeometry.Outer, leftMargin, antMargin, supMargin, rightMargin, postMargin, infMargin);
+                        return new AxisAlignedMargins(geometry, leftMargin, antMargin, supMargin, rightMargin, postMargin, infMargin);
                     case PatientOrientation.FeetFirstProne:
-                        return new AxisAlignedMargins(StructureMarginGeometry.Outer, rightMargin, postMargin, supMargin, leftMargin, antMargin, infMargin);
+                        return new AxisAlignedMargins(geometry, rightMargin, postMargin, supMargin, leftMargin, antMargin, infMargin);
                     default:
                         throw new Exception("This orientation is not currently supported");
                 }

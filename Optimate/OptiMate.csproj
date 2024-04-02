@@ -46,6 +46,9 @@
     <Reference Include="Costura, Version=5.7.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Costura.Fody.5.7.0\lib\netstandard1.0\Costura.dll</HintPath>
     </Reference>
+    <Reference Include="GongSolutions.WPF.DragDrop, Version=3.0.0.0, Culture=neutral, PublicKeyToken=91f1945125b7a587, processorArchitecture=MSIL">
+      <HintPath>..\packages\gong-wpf-dragdrop.3.2.1\lib\net48\GongSolutions.WPF.DragDrop.dll</HintPath>
+    </Reference>
     <Reference Include="HtmlToXamlConverter, Version=1.0.5727.24510, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\HtmlToXamlConverter.1.0.5727.24510\lib\net45\HtmlToXamlConverter.dll</HintPath>
     </Reference>
@@ -121,10 +124,21 @@
     <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controls\ConfirmationControl.xaml.cs">
+      <DependentUpon>ConfirmationControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\EditControl.xaml.cs">
+      <DependentUpon>EditControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\SaveAsTemplateControl.xaml.cs">
+      <DependentUpon>SaveAsTemplateControl.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Controls\WarningControl.xaml.cs">
       <DependentUpon>WarningControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Converters.cs" />
+    <Compile Include="Logging\SeriLog.cs" />
+    <Compile Include="Models\Events_Model.cs" />
     <Compile Include="Models\GenerateStructureModel.cs" />
     <Compile Include="Models\MainModel.cs" />
     <Compile Include="Models\OptiMateTypes.cs" />
@@ -136,15 +150,31 @@
       <DependentUpon>OptimateSchema.xsd</DependentUpon>
     </Compile>
     <Compile Include="Script.cs" />
+    <Compile Include="ViewModels\EditControlViewModel.cs" />
+    <Compile Include="ViewModels\ConfirmationViewModel.cs" />
     <Compile Include="ViewModels\DescriptionViewModel.cs" />
     <Compile Include="ViewModels\EclipseStructureViewModel.cs" />
+    <Compile Include="ViewModels\Events_UI.cs" />
     <Compile Include="ViewModels\GeneratedStructureViewModel.cs" />
     <Compile Include="ViewModels\InstructionViewModel.cs" />
+    <Compile Include="ViewModels\SaveNewTemplateViewModel.cs" />
     <Compile Include="ViewModels\TemplateStructureViewModel.cs" />
     <Compile Include="ViewModels\TemplateViewModel.cs" />
     <Compile Include="ViewModels\ViewModel.cs" />
     <Compile Include="Views\Behaviours.cs" />
     <Compile Include="Views\DescriptionView.xaml.cs" />
+    <Page Include="Controls\ConfirmationControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\EditControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\SaveAsTemplateControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Controls\WarningControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -167,6 +197,10 @@
     <Page Include="Views\DescriptionView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="XAMLDictionary.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <ItemGroup>
@@ -227,7 +261,12 @@
   <ItemGroup>
     <Resource Include="Resources\circle-info-solid.png" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="Resources\align.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\edit.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

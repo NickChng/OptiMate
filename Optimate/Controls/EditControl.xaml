@@ -1,0 +1,109 @@
+﻿<UserControl x:Class="OptiMate.Controls.EditControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:dd="urn:gong-wpf-dragdrop"
+             xmlns:ViewModels ="clr-namespace:OptiMate.ViewModels"
+             xmlns:behaviours="clr-namespace:OptiMate.Behaviours"
+             xmlns:local="clr-namespace:OptiMate.Controls"
+             mc:Ignorable="d" 
+             MaxHeight="500"
+             d:DesignHeight="250" d:DesignWidth="400"
+             d:DataContext="{d:DesignInstance Type=ViewModels:EditControlViewModel, IsDesignTimeCreatable=True}">
+    <UserControl.Resources>
+        <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" >
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../XAMLDictionary.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Border CornerRadius="4,4,4,4" Background="White" Margin="5,0,5,0" BorderBrush="CornflowerBlue" BorderThickness="2" MaxHeight="500" MaxWidth="800" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Grid Margin="5,5,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid Grid.Row="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Image Grid.Column="0" Source="../Resources/edit.png" Height="12" Width="12" VerticalAlignment="Center" Margin="10,0,5,0" />
+                        <TextBlock Grid.Column="1" Text="Edit Template Structure:" Foreground="Black" FontSize="13" FontWeight="Bold" Margin="0,0,0,0" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="2" Text="{Binding TemplateStructureId, UpdateSourceTrigger=PropertyChanged}" behaviours:TextBoxExtensions.UpdateSourceOnKey="Return"
+                                 Style="{StaticResource TextBoxStyle1}" FontSize="13" FontWeight="Bold"  Margin="10,0,5,0" Width="Auto" HorizontalAlignment="Left" MaxWidth="200" Padding="10,0,10,0"/>
+                    </Grid>
+                    <Border Grid.Row="1" Height="1" HorizontalAlignment="Stretch" Margin="10,5,10,0" Background="CornflowerBlue"/>
+                </Grid>
+            </Grid>
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Aliases:" FontWeight="DemiBold" FontSize="13" VerticalAlignment="Center" Margin="10,0,5,0" Style="{x:Null}"/>
+                    <ListBox Grid.Column="1" x:Name="structure_aliaslist" ItemsSource="{Binding Aliases, UpdateSourceTrigger=PropertyChanged}" Margin="0,5,10,5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Stretch" Background="White" Style="{DynamicResource ListBoxStyle1}" 
+                         ItemContainerStyle="{DynamicResource DraggableListBoxItemStyle}"
+                         BorderThickness="0"  
+                         dd:DragDrop.IsDragSource="True"
+                         DragDrop.Drop="ListBox_Drop" 
+                         DragDrop.DragOver="AliasList_DragOver" 
+                         SelectedIndex="{Binding SelectedAliasIndex, Mode=OneWayToSource}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Image Name ="DragImage"  Grid.Column="0" Height="20" Width="18" Stretch="Fill" RenderOptions.BitmapScalingMode="HighQuality" Source="..\Resources\align.png" ToolTip="Drag to reorder aliases" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="5,2,5,2" 
+                                    MouseDown="AliasList_MouseDown" />   
+                                    <TextBlock Grid.Column="1" Text="{Binding}" VerticalAlignment="Center" HorizontalAlignment="Stretch" Background="Transparent"/>
+                                    <Button Grid.Column="2" Style="{StaticResource ButtonStyle_Small}" VerticalAlignment="Center" Height="20" Width="20" Background="Transparent" 
+                                        Command="{Binding DataContext.RemoveAliasCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding}">
+                                        <Image Source="..\Resources\x.png"/>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+                <TextBlock Grid.Row="1" Text="Eclipse structures are mapped in order of the aliases above" FontSize="12" FontStyle="Italic" HorizontalAlignment="Center" Foreground="SteelBlue" FontWeight="DemiBold" Margin="10,0,10,0"/>
+                <Grid Grid.Row="2" Height="25" HorizontalAlignment="Left" Margin="5,10,0,5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Style="{x:Null}" Text="Add new alias:" VerticalAlignment="Center" FontSize="12" FontWeight="DemiBold"/>
+                    <TextBox Grid.Column="1" Text="{Binding NewAlias, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="10,0,10,0" Height="23" Background="{Binding NewAliasTextBoxColor,UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Width="200" Style="{StaticResource TextBoxStyle1}"/>
+                    <Border Grid.Column="2" Background="PapayaWhip" CornerRadius="5" Height="20" Width="20">
+                        <Button Style="{StaticResource ButtonStyle_Small}" Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center" Command="{Binding AddNewAliasCommand}">
+                            <Image Source="..\Resources\plus_black.png" ToolTip="Add alias"/>
+                        </Button>
+                    </Border>
+                    <Button Grid.Column="3" Style="{StaticResource ButtonStyle_Medium}" Width="60" Height="25" HorizontalAlignment="Right" Margin="5,0,5,0" Command="{Binding ConfirmCommand}" CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Popup}}}">
+                        <TextBlock Text="Close" FontWeight="DemiBold"/>
+                    </Button>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

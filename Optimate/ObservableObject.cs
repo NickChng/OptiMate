@@ -6,7 +6,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 
 
-namespace Optimate
+namespace OptiMate
 {
     public abstract partial class ObservableObject : INotifyPropertyChanged, INotifyDataErrorInfo
     {

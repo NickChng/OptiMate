@@ -9,10 +9,11 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
-using Optimate;
+using OptiMate;
 using OptiMate.ViewModels;
+using OptiMate.Logging;
 
-namespace Optimate.Converters
+namespace OptiMate.Converters
 {
     public class StructureTextBoxColourConverter : IValueConverter
     {
@@ -192,6 +193,29 @@ namespace Optimate.Converters
         }
     }
 
+    public class AsymmetricCropVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        {
+            if (value == null)
+                return Visibility.Collapsed;
+            else
+            {
+                OperatorTypes op = (OperatorTypes)value;
+                if (op == OperatorTypes.asymmetricCrop)
+                    return Visibility.Visible;
+                else
+                    return Visibility.Collapsed;
+            }
+
+        }
+        public object ConvertBack(object value, Type targetTypes,
+               object parameter, System.Globalization.CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public class AsymmetricMarginVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
@@ -333,15 +357,14 @@ namespace Optimate.Converters
                 var index = genStructure.InstructionViewModels.ToList().IndexOf(thisInstruction);
                 if (index > 0)
                 {
-                    Operators.Remove(OperatorTypes.copy);
                     return Operators;
                 }
                 else
-                    return new ObservableCollection<OperatorTypes>() { OperatorTypes.copy };
+                    return new ObservableCollection<OperatorTypes>() { OperatorTypes.or, OperatorTypes.convertResolution, OperatorTypes.convertDose };
             }
             else
             {
-                return new ObservableCollection<OperatorTypes>() { OperatorTypes.copy };
+                return new ObservableCollection<OperatorTypes>() { OperatorTypes.or, OperatorTypes.convertResolution, OperatorTypes.convertDose };
             }
         }
 
@@ -437,7 +460,7 @@ namespace Optimate.Converters
             }
             catch (Exception ex)
             {
-                Helpers.SeriLog.AddError("Error in AvailableStructureConverter", ex);
+                SeriLogUI.AddError("Error in AvailableStructureConverter", ex);
                 return null;
             }
         }

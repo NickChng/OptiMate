@@ -1,5 +1,5 @@
-﻿using Optimate;
-using Optimate.ViewModels;
+﻿using OptiMate;
+using OptiMate.ViewModels;
 using OptiMate.Models;
 using Prism.Events;
 using System;
@@ -19,17 +19,19 @@ namespace OptiMate.ViewModels
     public enum OperatorTypes
     {
         undefined,
-        copy,
+        convertResolution,
         margin,
         asymmetricMargin,
         or,
         and,
         crop,
+        asymmetricCrop,
         sub,
         subfrom,
         convertDose
     }
 
+    public class RemovingInstructionViewModelEvent : PubSubEvent<InstructionViewModel> { }
     public class InstructionViewModel : ObservableObject
     {
         private MainModel _model;
@@ -38,12 +40,13 @@ namespace OptiMate.ViewModels
         private GeneratedStructure _parentGeneratedStructure;
         public SometimesObservableCollection<OperatorTypes> Operators { get; set; } = new SometimesObservableCollection<OperatorTypes>()
         {
-              OperatorTypes.copy,
+              OperatorTypes.convertResolution,
               OperatorTypes.margin,
               OperatorTypes.asymmetricMargin,
               OperatorTypes.or,
               OperatorTypes.and,
               OperatorTypes.crop,
+              OperatorTypes.asymmetricCrop,
               OperatorTypes.sub,
               OperatorTypes.subfrom,
               OperatorTypes.convertDose
@@ -74,14 +77,7 @@ namespace OptiMate.ViewModels
                 }
             }
         }
-        public bool isCopy { get; set; } = false;
-        public bool isOr { get; set; } = false;
-        public bool isAnd { get; set; } = false;
-        public bool isSub { get; set; } = false;
-        public bool isMargin { get; set; } = false;
-        public bool isAsymmetricMargin { get; set; } = false;
-        public bool isConvertDose { get; set; } = false;
-        public bool isCrop { get; set; } = false;
+ 
 
         public string marginValueToolTip
         {
@@ -96,7 +92,12 @@ namespace OptiMate.ViewModels
             {
                 if (SelectedOperator == OperatorTypes.asymmetricMargin)
                 {
-                    return (_instruction as AsymmetricMargin)?.AntMargin;
+                    if ((_instruction as AsymmetricMargin)?.AntMargin == null)
+                    {
+                        return "0";
+                    }
+                    else
+                        return (_instruction as AsymmetricMargin)?.AntMargin;
                 }
                 else
                 {
@@ -119,7 +120,12 @@ namespace OptiMate.ViewModels
             {
                 if (SelectedOperator == OperatorTypes.asymmetricMargin)
                 {
-                    return (_instruction as AsymmetricMargin)?.PostMargin;
+                    if ((_instruction as AsymmetricMargin)?.PostMargin == null)
+                    {
+                        return "0";
+                    }
+                    else
+                        return (_instruction as AsymmetricMargin)?.PostMargin;
                 }
                 else
                 {
@@ -144,7 +150,12 @@ namespace OptiMate.ViewModels
             {
                 if (SelectedOperator == OperatorTypes.asymmetricMargin)
                 {
-                    return (_instruction as AsymmetricMargin)?.SupMargin;
+                    if ((_instruction as AsymmetricMargin)?.SupMargin == null)
+                    {
+                        return "0";
+                    }
+                    else
+                        return (_instruction as AsymmetricMargin)?.SupMargin;
                 }
                 else
                 {
@@ -169,7 +180,12 @@ namespace OptiMate.ViewModels
             {
                 if (SelectedOperator == OperatorTypes.asymmetricMargin)
                 {
-                    return (_instruction as AsymmetricMargin)?.InfMargin;
+                    if ((_instruction as AsymmetricMargin)?.InfMargin == null)
+                    {
+                        return "0";
+                    }
+                    else
+                        return (_instruction as AsymmetricMargin)?.InfMargin;
                 }
                 else
                 {
@@ -194,7 +210,12 @@ namespace OptiMate.ViewModels
             {
                 if (SelectedOperator == OperatorTypes.asymmetricMargin)
                 {
-                    return (_instruction as AsymmetricMargin)?.LeftMargin;
+                    if ((_instruction as AsymmetricMargin)?.LeftMargin == null)
+                    {
+                        return "0";
+                    }
+                    else
+                        return (_instruction as AsymmetricMargin)?.LeftMargin;
                 }
                 else
                 {
@@ -219,7 +240,12 @@ namespace OptiMate.ViewModels
             {
                 if (SelectedOperator == OperatorTypes.asymmetricMargin)
                 {
-                    return (_instruction as AsymmetricMargin)?.RightMargin;
+                    if ((_instruction as AsymmetricMargin)?.RightMargin == null)
+                    {
+                        return "0";
+                    }
+                    else
+                        return (_instruction as AsymmetricMargin)?.RightMargin;
                 }
                 else
                 {
@@ -322,6 +348,7 @@ namespace OptiMate.ViewModels
             }
         }
 
+
         public Visibility MarginVisibility
         {
             get
@@ -409,7 +436,12 @@ namespace OptiMate.ViewModels
             {
                 if (SelectedOperator == OperatorTypes.crop)
                 {
-                    return (_instruction as Crop).IsotropicOffset;
+                    if (string.IsNullOrEmpty((_instruction as Crop).IsotropicOffset))
+                    {
+                        return "0";
+                    }
+                    else
+                        return (_instruction as Crop).IsotropicOffset;
                 }
                 else return "";
             }
@@ -417,11 +449,182 @@ namespace OptiMate.ViewModels
             {
                 if (SelectedOperator == OperatorTypes.crop)
                 {
-                    (_instruction as Crop).IsotropicOffset = value;
-                    isModified = true;
+                    if (isMarginValueValid(value))
+                    {
+                        (_instruction as Crop).IsotropicOffset = value;
+                        isModified = true;
+                    }
                 }
             }
         }
+
+        public string LeftCropOffset
+        {
+            get
+            {
+                if (SelectedOperator == OperatorTypes.asymmetricCrop)
+                {
+                    if (string.IsNullOrEmpty((_instruction as AsymmetricCrop).LeftOffset))
+                    {
+                        return "0";
+                    }
+                    else
+                        return (_instruction as AsymmetricCrop).LeftOffset;
+                }
+                else return "";
+            }
+            set
+            {
+                if (SelectedOperator == OperatorTypes.asymmetricCrop)
+                {
+                    if (isMarginValueValid(value))
+                    {
+                        (_instruction as AsymmetricCrop).LeftOffset = value;
+                        isModified = true;
+                    }
+                }
+            }
+        }
+        public string RightCropOffset
+        {
+            get
+            {
+                if (SelectedOperator == OperatorTypes.asymmetricCrop)
+                {
+                    if (string.IsNullOrEmpty((_instruction as AsymmetricCrop).RightOffset))
+                    {
+                        return "0";
+                    }
+                    else
+                        return (_instruction as AsymmetricCrop).RightOffset;
+                }
+                else return "";
+            }
+            set
+            {
+                if (SelectedOperator == OperatorTypes.asymmetricCrop)
+                {
+                    if (isMarginValueValid(value))
+                    {
+                        (_instruction as AsymmetricCrop).RightOffset = value;
+                        isModified = true;
+                    }
+                }
+            }
+        }
+
+        public string AntCropOffset
+        {
+            get
+            {
+                if (SelectedOperator == OperatorTypes.asymmetricCrop)
+                {
+                    if (string.IsNullOrEmpty((_instruction as AsymmetricCrop).AntOffset))
+                    {
+                        return "0";
+                    }
+                    else
+                        return (_instruction as AsymmetricCrop).AntOffset;
+                }
+                else return "";
+            }
+            set
+            {
+                if (SelectedOperator == OperatorTypes.asymmetricCrop)
+                {
+                    if (isMarginValueValid(value))
+                    {
+                        (_instruction as AsymmetricCrop).AntOffset = value;
+                        isModified = true;
+                    }
+                }
+            }
+        }
+
+        public string PostCropOffset
+        {
+            get
+            {
+                if (SelectedOperator == OperatorTypes.asymmetricCrop)
+                {
+                    if (string.IsNullOrEmpty((_instruction as AsymmetricCrop).PostOffset))
+                    {
+                        return "0";
+                    }
+                    else
+                        return (_instruction as AsymmetricCrop).PostOffset;
+                }
+                else return "";
+            }
+            set
+            {
+                if (SelectedOperator == OperatorTypes.asymmetricCrop)
+                {
+                    if (isMarginValueValid(value))
+                    {
+                        (_instruction as AsymmetricCrop).PostOffset = value;
+                        isModified = true;
+                    }
+                }
+            }
+        }
+
+        public string InfCropOffset
+        {
+            get
+            {
+                if (SelectedOperator == OperatorTypes.asymmetricCrop)
+                {
+                    if (string.IsNullOrEmpty((_instruction as AsymmetricCrop).InfOffset))
+                    {
+                        return "0";
+                    }
+                    else
+                        return (_instruction as AsymmetricCrop).InfOffset;
+                }
+                else return "";
+            }
+            set
+            {
+                if (SelectedOperator == OperatorTypes.asymmetricCrop)
+                {
+                    if (isMarginValueValid(value))
+                    {
+                        (_instruction as AsymmetricCrop).InfOffset = value;
+                        isModified = true;
+                    }
+                }
+            }
+        }
+
+        public string SupCropOffset
+        {
+            get
+            {
+                if (SelectedOperator == OperatorTypes.asymmetricCrop)
+                {
+                    if (string.IsNullOrEmpty((_instruction as AsymmetricCrop).SupOffset))
+                    {
+                        return "0";
+                    }
+                    else
+                        return (_instruction as AsymmetricCrop).SupOffset;
+                }
+                else return "";
+            }
+            set
+            {
+                if (SelectedOperator == OperatorTypes.asymmetricCrop)
+                {
+                    if (isMarginValueValid(value))
+                    {
+                        (_instruction as AsymmetricCrop).SupOffset = value;
+                        isModified = true;
+                    }
+                }
+            }
+        }
+
         public Visibility CropVisibility
         {
             get
@@ -463,6 +666,10 @@ namespace OptiMate.ViewModels
                         return Visibility.Hidden;
                     case OperatorTypes.asymmetricMargin:
                         return Visibility.Hidden;
+                    case OperatorTypes.convertResolution:
+                        return Visibility.Hidden;
+                    case OperatorTypes.convertDose:
+                        return Visibility.Hidden;
                     default:
                         return Visibility.Visible;
                 }
@@ -492,14 +699,16 @@ namespace OptiMate.ViewModels
                 {
                     case Crop crop:
                         return crop.TemplateStructureId;
+                    case AsymmetricCrop crop:
+                        return crop.TemplateStructureId;
                     case And and:
                         return and.TemplateStructureId;
                     case Or or:
                         return or.TemplateStructureId;
                     case Sub sub:
                         return sub.TemplateStructureId;
-                    case Copy copy:
-                        return copy.TemplateStructureId;
+                    case SubFrom subFrom:
+                        return subFrom.TemplateStructureId;
                     default:
                         return "";
                 }
@@ -511,6 +720,9 @@ namespace OptiMate.ViewModels
                     case Crop crop:
                         crop.TemplateStructureId = value;
                         break;
+                    case AsymmetricCrop crop:
+                        crop.TemplateStructureId = value;
+                        break;
                     case And and:
                         and.TemplateStructureId = value;
                         break;
@@ -520,8 +732,8 @@ namespace OptiMate.ViewModels
                     case Sub sub:
                         sub.TemplateStructureId = value;
                         break;
-                    case Copy copy:
-                        copy.TemplateStructureId = value;
+                    case SubFrom subFrom:
+                        subFrom.TemplateStructureId = value;
                         break;
                     default:
                         return;
@@ -539,7 +751,7 @@ namespace OptiMate.ViewModels
                 if (string.IsNullOrEmpty(TargetTemplateStructureId))
                 {
                     int instructionNumber = _model.GetInstructionNumber(_parentGeneratedStructure.StructureId, _instruction);
-                    AddError(nameof(TargetTemplateStructureId), $"{_parentGeneratedStructure.StructureId} operator #{instructionNumber + 1} has an invalid target");
+                    AddError(nameof(TargetTemplateStructureId), $"{_parentGeneratedStructure.StructureId} operator #{instructionNumber + 1} has an invalid target of operation.");
                 }
             }
             RaisePropertyChangedEvent(nameof(TargetTemplateBackgroundColor));
@@ -599,14 +811,16 @@ namespace OptiMate.ViewModels
                     return true;
                 case OperatorTypes.sub:
                     return true;
+                case OperatorTypes.subfrom:
+                    return true;
                 case OperatorTypes.convertDose:
                     return false;
                 case OperatorTypes.crop:
                     return true;
                 case OperatorTypes.margin:
                     return false;
-                case OperatorTypes.copy:
-                    return true;
+                case OperatorTypes.convertResolution:
+                    return false;
                 case OperatorTypes.asymmetricMargin:
                     return false;
                 default:
@@ -623,31 +837,33 @@ namespace OptiMate.ViewModels
             }
         }
 
-        public Visibility TargetTemplateStructureVisibility
-        {
-            get
-            {
-                switch (SelectedOperator)
-                {
-                    case OperatorTypes.or:
-                        return Visibility.Visible;
-                    case OperatorTypes.and:
-                        return Visibility.Visible;
-                    case OperatorTypes.sub:
-                        return Visibility.Visible;
-                    case OperatorTypes.convertDose:
-                        return Visibility.Collapsed;
-                    case OperatorTypes.crop:
-                        return Visibility.Visible;
-                    case OperatorTypes.margin:
-                        return Visibility.Collapsed;
-                    case OperatorTypes.copy:
-                        return Visibility.Collapsed;
-                    default:
-                        return Visibility.Collapsed;
-                }
-            }
-        }
+        //public Visibility TargetTemplateStructureVisibility
+        //{
+        //    get
+        //    {
+        //        switch (SelectedOperator)
+        //        {
+        //            case OperatorTypes.or:
+        //                return Visibility.Visible;
+        //            case OperatorTypes.and:
+        //                return Visibility.Visible;
+        //            case OperatorTypes.sub:
+        //                return Visibility.Visible;
+        //            case OperatorTypes.subfrom:
+        //                return Visibility.Visible;
+        //            case OperatorTypes.convertDose:
+        //                return Visibility.Collapsed;
+        //            case OperatorTypes.crop:
+        //                return Visibility.Visible;
+        //            case OperatorTypes.margin:
+        //                return Visibility.Collapsed;
+        //            case OperatorTypes.convertResolution:
+        //                return Visibility.Collapsed;
+        //            default:
+        //                return Visibility.Collapsed;
+        //        }
+        //    }
+        //}
 
         public ObservableCollection<TemplateStructure> TemplateStructures { get; set; } = new ObservableCollection<TemplateStructure>();
         public InstructionViewModel(Instruction instruction, GeneratedStructure parentStructure, MainModel model, IEventAggregator ea)
@@ -665,34 +881,35 @@ namespace OptiMate.ViewModels
         {
             switch (_instruction)
             {
-                case Or _:
-                    isOr = true;
-                    TargetTemplateStructureId = (_instruction as Or).TemplateStructureId;
+                case Or inst:
+                    TargetTemplateStructureId = inst.TemplateStructureId;
                     DefaultTemplateStructureId = TargetTemplateStructureId;
                     _selectedOperator = OperatorTypes.or;
                     RaisePropertyChangedEvent(nameof(TargetTemplateStructureId));
                     break;
-                case And _:
-                    isAnd = true;
-                    TargetTemplateStructureId = (_instruction as And).TemplateStructureId;
+                case And inst:
+                    TargetTemplateStructureId = inst.TemplateStructureId;
                     DefaultTemplateStructureId = TargetTemplateStructureId;
                     _selectedOperator = OperatorTypes.and;
                     RaisePropertyChangedEvent(nameof(TargetTemplateStructureId));
                     break;
-                case Sub _:
-                    isSub = true;
-                    TargetTemplateStructureId = (_instruction as Sub).TemplateStructureId;
+                case Sub inst:
+                    TargetTemplateStructureId = inst.TemplateStructureId;
                     DefaultTemplateStructureId = TargetTemplateStructureId;
                     _selectedOperator = OperatorTypes.sub;
                     RaisePropertyChangedEvent(nameof(TargetTemplateStructureId));
                     break;
+                case SubFrom inst:
+                    TargetTemplateStructureId = inst.TemplateStructureId;
+                    DefaultTemplateStructureId = TargetTemplateStructureId;
+                    _selectedOperator = OperatorTypes.subfrom;
+                    RaisePropertyChangedEvent(nameof(TargetTemplateStructureId));
+                    break;
                 case Margin _:
-                    isMargin = true;
                     _selectedOperator = OperatorTypes.margin;
                     RaisePropertyChangedEvent(nameof(IsoMargin));
                     break;
                 case AsymmetricMargin _:
-                    isAsymmetricMargin = true;
                     _selectedOperator = OperatorTypes.asymmetricMargin;
                     RaisePropertyChangedEvent(nameof(RightMargin));
                     RaisePropertyChangedEvent(nameof(LeftMargin));
@@ -703,23 +920,32 @@ namespace OptiMate.ViewModels
                     RaisePropertyChangedEvent(nameof(SelectedMargin));
                     break;
                 case ConvertDose _:
-                    isConvertDose = true;
                     _selectedOperator = OperatorTypes.convertDose;
-                    break;
-                case Copy _:
-                    isCopy = true;
-                    TargetTemplateStructureId = (_instruction as Copy).TemplateStructureId;
-                    DefaultTemplateStructureId = TargetTemplateStructureId;
-                    _selectedOperator = OperatorTypes.copy;
                     RaisePropertyChangedEvent(nameof(TargetTemplateStructureId));
                     break;
-                case Crop _:
-                    isCrop = true;
-                    TargetTemplateStructureId = (_instruction as Crop).TemplateStructureId;
+                case ConvertResolution _:
+                    _selectedOperator = OperatorTypes.convertResolution;
+                    RaisePropertyChangedEvent(nameof(TargetTemplateStructureId));
+                    break;
+                case Crop inst:
+                    TargetTemplateStructureId = inst.TemplateStructureId;
                     DefaultTemplateStructureId = TargetTemplateStructureId;
                     _selectedOperator = OperatorTypes.crop;
                     RaisePropertyChangedEvent(nameof(TargetTemplateStructureId));
                     RaisePropertyChangedEvent(nameof(IsoCropOffset));
+                    RaisePropertyChangedEvent(nameof(InternalCrop));
+                    break;
+                case AsymmetricCrop inst:
+                    TargetTemplateStructureId = inst.TemplateStructureId;
+                    DefaultTemplateStructureId = TargetTemplateStructureId;
+                    _selectedOperator = OperatorTypes.asymmetricCrop;
+                    RaisePropertyChangedEvent(nameof(TargetTemplateStructureId));
+                    RaisePropertyChangedEvent(nameof(RightCropOffset));
+                    RaisePropertyChangedEvent(nameof(LeftCropOffset));
+                    RaisePropertyChangedEvent(nameof(PostCropOffset));
+                    RaisePropertyChangedEvent(nameof(AntCropOffset));
+                    RaisePropertyChangedEvent(nameof(SupCropOffset));
+                    RaisePropertyChangedEvent(nameof(InfCropOffset));
                     RaisePropertyChangedEvent(nameof(InternalCrop));
                     break;
                 default:
@@ -734,31 +960,70 @@ namespace OptiMate.ViewModels
         {
             // Design use only
             TargetTemplateStructureId = "DesignId";
-            _instruction = new Copy { TemplateStructureId = TargetTemplateStructureId };
+            _instruction = new Or { TemplateStructureId = TargetTemplateStructureId };
         }
 
         public void RegisterEvents()
         {
-            _ea.GetEvent<NewTemplateStructureEvent>().Subscribe(UpdateTargetStructureList);
-            _ea.GetEvent<TemplateStructureIdChanged>().Subscribe(UpdateTargetStructureList);
-            _ea.GetEvent<RemovedTemplateStructureEvent>().Subscribe(RemoveTargetStructureFromList);
+            _ea.GetEvent<NewTemplateStructureEvent>().Subscribe(OnNewTemplateStructureEvent);
+            _ea.GetEvent<TemplateStructureIdChangedEvent>().Subscribe(OnTemplateStructureIdChanged);
+            _ea.GetEvent<RemovedTemplateStructureEvent>().Subscribe(RemoveTemplateStructureFromList);
+            _ea.GetEvent<RemovedGeneratedStructureEvent>().Subscribe(RemoveGeneratedStructureFromList);
+            _ea.GetEvent<RemovedInstructionEvent>().Subscribe(RemoveInstructionViewModel);
+            _ea.GetEvent<GeneratedStructureIdChangedEvent>().Subscribe(OnGeneratedStructureIdChanged);
+            _ea.GetEvent<GeneratedStructureOrderChangedEvent>().Subscribe(OnGeneratedStructureOrderChanged);
             ErrorsChanged += (sender, args) => { _ea.GetEvent<DataValidationRequiredEvent>().Publish(); };
         }
 
-        private void RemoveTargetStructureFromList(RemovedTemplateStructureEventInfo info)
+        private void RemoveGeneratedStructureFromList(RemovedGeneratedStructureEventInfo info)
         {
             RaisePropertyChangedEvent(nameof(TargetTemplateIds));
         }
 
-        private void UpdateTargetStructureList(NewTemplateStructureEventInfo info)
-        {
-            RaisePropertyChangedEvent(nameof(TargetTemplateIds));
-        }
-        private void UpdateTargetStructureList(string newStructureId)
+        private void OnGeneratedStructureOrderChanged()
         {
             RaisePropertyChangedEvent(nameof(TargetTemplateIds));
         }
 
+        private void OnGeneratedStructureIdChanged(GeneratedStructureIdChangedEventInfo info)
+        {
+            if (TargetTemplateStructureId == info.OldId)
+            {
+                DefaultTemplateStructureId = info.NewId;
+                TargetTemplateStructureId = info.NewId;
+                RaisePropertyChangedEvent(nameof(TargetTemplateStructureId));
+            }
+            RaisePropertyChangedEvent(nameof(TargetTemplateIds));
+        }
+
+        private void OnNewTemplateStructureEvent(NewTemplateStructureEventInfo info)
+        {
+            RaisePropertyChangedEvent(nameof(TargetTemplateIds));
+        }
+
+        private void RemoveInstructionViewModel(InstructionRemovedEventInfo info)
+        {
+            if (_instruction == info.RemovedInstruction)
+                _ea.GetEvent<RemovingInstructionViewModelEvent>().Publish(this);
+            
+        }
+
+        private void RemoveTemplateStructureFromList(RemovedTemplateStructureEventInfo info)
+        {
+            RaisePropertyChangedEvent(nameof(TargetTemplateIds));
+        }
+
+        private void OnTemplateStructureIdChanged(TemplateStructureIdChangedEventInfo info)
+        {
+            RaisePropertyChangedEvent(nameof(TargetTemplateIds));
+            if (info.OldId == TargetTemplateStructureId)
+            {
+                DefaultTemplateStructureId = info.NewId;
+                TargetTemplateStructureId = info.NewId;
+                RaisePropertyChangedEvent(nameof(TargetTemplateStructureId));
+            }
+        }
+       
         internal void RemoveInstruction()
         {
             _model.RemoveInstruction(_parentGeneratedStructure.StructureId, _instruction);

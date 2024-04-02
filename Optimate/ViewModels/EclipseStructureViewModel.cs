@@ -1,4 +1,4 @@
-﻿using Optimate;
+﻿using OptiMate;
 using OptiMate.Models;
 using System;
 using System.Collections.Generic;

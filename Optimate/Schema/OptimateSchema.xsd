@@ -3,12 +3,13 @@
   <xs:simpleType name="OperatorType" final="restriction">
     <xs:restriction base="xs:string">
       <xs:enumeration value="UNDEFINED" />
-      <xs:enumeration value="copy" />
+      <xs:enumeration value="convertResolution" />
       <xs:enumeration value="margin" />
       <xs:enumeration value="asymmetricMargin" />
       <xs:enumeration value="or" />
       <xs:enumeration value="and" />
       <xs:enumeration value="crop" />
+      <xs:enumeration value="asymmetricCrop" />
       <xs:enumeration value="sub" />
       <xs:enumeration value="subfrom" />
       <xs:enumeration value="convertDose" />
@@ -49,13 +50,14 @@
             <xs:complexType>
               <xs:sequence>
                 <xs:choice minOccurs="1" maxOccurs="unbounded">
-                  <xs:element name="Copy" type="OptiMate:Copy"/>
+                  <xs:element name="ConvertResolution" type="OptiMate:ConvertResolution"/>
                   <xs:element name="Margin" type="OptiMate:Margin"/>
                   <xs:element name="AsymmetricMargin" type="OptiMate:AsymmetricMargin"/>
                   <xs:element name="Or" type="OptiMate:Or"/>
                   <xs:element name="And" type="OptiMate:And"/>
                   <xs:element name="Sub" type="OptiMate:Sub"/>
                   <xs:element name="Crop" type="OptiMate:Crop"/>
+                  <xs:element name="AsymmetricCrop" type="OptiMate:AsymmetricCrop"/>
                   <xs:element name="SubFrom" type="OptiMate:SubFrom"/>
                 </xs:choice>
               </xs:sequence>
@@ -63,18 +65,15 @@
           </xs:element>
         </xs:sequence>
         <xs:attribute name="StructureId" type="xs:string" use="required"/>
-        <xs:attribute name="isHighResolution" type="xs:boolean" default="false"/>
         <xs:attribute name="DicomType" type="xs:string" default="CONTROL"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
   <xs:complexType name="Instruction">
   </xs:complexType>
-  <xs:complexType name="Copy">
+  <xs:complexType name="ConvertResolution">
     <xs:complexContent mixed="false">
-      <xs:extension base="OptiMate:Instruction">
-        <xs:attribute name="TemplateStructureId" type="xs:string" use="required"/>
-      </xs:extension>
+      <xs:extension base="OptiMate:Instruction"/>
     </xs:complexContent>
   </xs:complexType>
   <xs:complexType name="Or">
@@ -118,12 +117,6 @@
         <xs:attribute name="TemplateStructureId" type="xs:string" use="required"/>
         <xs:attribute name="InternalCrop" type="xs:boolean" use="optional" default="false"/>
         <xs:attribute name="IsotropicOffset" type="OptiMate:MarginRangeOrEmpty" use="optional" default=""/>
-        <xs:attribute name="AntOffset" type="OptiMate:MarginRangeOrEmpty" use="optional" default=""/>
-        <xs:attribute name="PostOffset" type="OptiMate:MarginRangeOrEmpty" use="optional" default=""/>
-        <xs:attribute name="SupOffset" type="OptiMate:MarginRangeOrEmpty" use="optional" default=""/>
-        <xs:attribute name="InfOffset" type="OptiMate:MarginRangeOrEmpty" use="optional" default=""/>
-        <xs:attribute name="LeftOffset" type="OptiMate:MarginRangeOrEmpty" use="optional" default=""/>
-        <xs:attribute name="RightOffset" type="OptiMate:MarginRangeOrEmpty" use="optional" default=""/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
@@ -137,6 +130,20 @@
         <xs:attribute name="InfMargin" type="OptiMate:MarginRangeOrEmpty" use="required" />
         <xs:attribute name="LeftMargin" type="OptiMate:MarginRangeOrEmpty" use="required" />
         <xs:attribute name="RightMargin" type="OptiMate:MarginRangeOrEmpty" use="required" />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="AsymmetricCrop">
+    <xs:complexContent mixed="false">
+      <xs:extension base="OptiMate:Instruction">
+        <xs:attribute name="TemplateStructureId" type="xs:string" use="required"/>
+        <xs:attribute name="InternalCrop" type="xs:boolean" use="optional" default="false"/>
+        <xs:attribute name="AntOffset" type="OptiMate:MarginRangeOrEmpty" use="required"/>
+        <xs:attribute name="PostOffset" type="OptiMate:MarginRangeOrEmpty" use="required"/>
+        <xs:attribute name="SupOffset" type="OptiMate:MarginRangeOrEmpty" use="required"/>
+        <xs:attribute name="InfOffset" type="OptiMate:MarginRangeOrEmpty" use="required"/>
+        <xs:attribute name="LeftOffset" type="OptiMate:MarginRangeOrEmpty" use="required"/>
+        <xs:attribute name="RightOffset" type="OptiMate:MarginRangeOrEmpty" use="required"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
@@ -169,6 +176,21 @@
         </xs:element>
       </xs:sequence>
       <xs:attribute name="TemplateDisplayName" type="xs:string" />
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="OptiMateConfiguration">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Paths">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element minOccurs="0" maxOccurs="1" name="PublicTemplatePath" type="xs:string"/>
+              <xs:element minOccurs="0" maxOccurs="1" name="UsersTemplatePath" type="xs:string"/>
+              <xs:element minOccurs="0" maxOccurs="1" name="LogPath" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
     </xs:complexType>
   </xs:element>
   <xs:complexType name="ObservableObject" abstract="true">

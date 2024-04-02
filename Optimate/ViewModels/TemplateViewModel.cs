@@ -1,4 +1,4 @@
-﻿using Optimate;
+﻿using OptiMate;
 using OptiMate.Models;
 using System;
 using System.Collections.Generic;
@@ -10,7 +10,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Prism.Events;
-using Optimate.ViewModels;
+using OptiMate.ViewModels;
+using OptiMate.Logging;
 
 namespace OptiMate.ViewModels
 {
@@ -24,11 +25,11 @@ namespace OptiMate.ViewModels
         public ObservableCollection<GeneratedStructureViewModel> GeneratedStructuresVM { get; set; } = new ObservableCollection<GeneratedStructureViewModel>();
         public ObservableCollection<TemplateStructureViewModel> TemplateStructuresVM { get; set; } = new ObservableCollection<TemplateStructureViewModel>();
 
-        //public ObservableCollection<EclipseStructureViewModel> EclipseIds { get; set; } = new ObservableCollection<EclipseStructureViewModel>()
-        //{
-        //    new EclipseStructureViewModel() { EclipseId = "DesignEclipseId1" },
-        //    new EclipseStructureViewModel() { EclipseId = "DesignEclipseId2" }
-        //};
+        public int SelectedTSIndex { get; set; }
+        public int SelectedGSIndex { get; set; }
+        public ConfirmationViewModel ConfirmRemoveTemplateStructureVM { get; set; }
+        public ConfirmationViewModel ConfirmRemoveGeneratedStructureVM { get; set; }
+
         public string TemplateDisplayName
         {
             get
@@ -49,12 +50,6 @@ namespace OptiMate.ViewModels
             _model = model;
             _ea = ea;
             RegisterEvents();
-            //EclipseIds.Clear();
-            //foreach (var id in _model.GetEclipseStructureIds())
-            //{
-            //    EclipseIds.Add(new EclipseStructureViewModel(id, _model));
-            //}
-            
             GeneratedStructuresVM = new ObservableCollection<GeneratedStructureViewModel>();
             TemplateStructuresVM = new ObservableCollection<TemplateStructureViewModel>();
             foreach (var structure in template.GeneratedStructures)
@@ -104,17 +99,29 @@ namespace OptiMate.ViewModels
 
         }
 
-        public ICommand RemoveGeneratedStructureCommand
+        public ICommand ConfirmRemoveGeneratedStructureCommand
         {
             get
             {
-                return new DelegateCommand(RemoveGeneratedStructure);
+                return new DelegateCommand(ConfirmRemoveGeneratedStructure);
             }
         }
 
-        public void RemoveGeneratedStructure(object param = null)
+        private void ConfirmRemoveGeneratedStructure(object param = null)
         {
             var genStructureVM = param as GeneratedStructureViewModel;
+            object[] RemoveStructureParam = new object[] { genStructureVM, _model, GeneratedStructuresVM, _ea };
+            ConfirmRemoveGeneratedStructureVM = new ConfirmationViewModel("Removing this will also remove all operators referencing this structure. Continue?", new DelegateCommand(RemoveGeneratedStructure), RemoveStructureParam);
+            genStructureVM.ConfirmRemoveStructurePopupVisibility ^= true;
+        }
+
+        internal void RemoveGeneratedStructure(object param = null)
+        {
+            var genStructureVM = (param as object[])[0] as GeneratedStructureViewModel;
+            var _model = (param as object[])[1] as MainModel;
+            var GeneratedStructuresVM = (param as object[])[2] as ObservableCollection<GeneratedStructureViewModel>;
+            var _ea = (param as object[])[3] as IEventAggregator;
+
             _model.RemoveGeneratedStructure(genStructureVM.StructureId);
             GeneratedStructuresVM.Remove(genStructureVM);
             _ea.GetEvent<DataValidationRequiredEvent>().Publish();
@@ -140,20 +147,33 @@ namespace OptiMate.ViewModels
         {
             get
             {
-                return new DelegateCommand(RemoveTemplateStructure);
+                return new DelegateCommand(ConfirmRemoveTemplateStructure);
             }
         }
 
-        private void RemoveTemplateStructure(object obj)
+        private void ConfirmRemoveTemplateStructure(object obj)
         {
             var tSVM = obj as TemplateStructureViewModel;
             if (tSVM != null)
             {
-                _model.RemoveTemplateStructure(tSVM.TemplateStructureId);
-                TemplateStructuresVM.Remove(tSVM);
-                _ea.GetEvent<DataValidationRequiredEvent>().Publish();
+                object[] RemoveStructureParam = new object[] { tSVM, _model, TemplateStructuresVM, _ea };
+                ConfirmRemoveTemplateStructureVM = new ConfirmationViewModel("Removing this will remove all operations referencing this structure. Continue?", new DelegateCommand(RemoveTemplateStructure), RemoveStructureParam);
+                tSVM.ConfirmRemoveStructurePopupVisibility = true;
             }
         }
+        private void RemoveTemplateStructure(object param)
+        {
+            var tSVM = (param as object[])[0] as TemplateStructureViewModel;
+            var _model = (param as object[])[1] as MainModel;
+            var TemplateStructuresVM = (param as object[])[2] as ObservableCollection<TemplateStructureViewModel>;
+            var _ea = (param as object[])[3] as IEventAggregator;
+            _model.RemoveTemplateStructure(tSVM.TemplateStructureId);
+            TemplateStructuresVM.Remove(tSVM);
+            _ea.GetEvent<DataValidationRequiredEvent>().Publish();
+
+        }
+
+
 
         internal List<GeneratedStructure> GetStructuresToGenerate()
         {
@@ -193,6 +213,18 @@ namespace OptiMate.ViewModels
                 }
             }
             return isValid;
+        }
+
+        internal void ReorderTemplateStructures(int a, int b)
+        {
+            TemplateStructuresVM.Move(a, b);
+            _model.ReorderTemplateStructures(a, b);
+        }
+
+        internal void ReorderGenStructures(int a, int b)
+        {
+            GeneratedStructuresVM.Move(a, b);
+            _model.ReorderGeneratedStructures(a, b);
         }
     }
 }

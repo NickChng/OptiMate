@@ -1,4 +1,4 @@
-﻿using Optimate;
+﻿using OptiMate;
 using OptiMate.Models;
 using System;
 using System.Collections.Generic;
@@ -11,7 +11,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Reflection;
 using Prism.Events;
-using Optimate.ViewModels;
+using OptiMate.ViewModels;
+using OptiMate.Logging;
 
 namespace OptiMate.ViewModels
 {
@@ -24,37 +25,40 @@ namespace OptiMate.ViewModels
         public GeneratedStructureViewModel(GeneratedStructure genStructure, MainModel model, IEventAggregator ea, bool isNew = false)
         {
             _generatedStructure = genStructure;
-            this.isNew = isNew;
+            EditMode = isNew;
             _model = model;
             _ea = ea;
             foreach (var instruction in genStructure.Instructions.Items)
             {
                 InstructionViewModels.Add(new InstructionViewModel(instruction, genStructure, _model, _ea));
             }
+            RegisterEvents();
         }
+
+        private void RegisterEvents()
+        {
+           _ea.GetEvent<RemovingInstructionViewModelEvent>().Subscribe(OnRemovingInstructionViewModel);
+        }
+
+        private void OnRemovingInstructionViewModel(InstructionViewModel ivm)
+        {
+            if (InstructionViewModels.Contains(ivm))
+            {
+                InstructionViewModels.Remove(ivm);
+                RaisePropertyChangedEvent(nameof(InstructionViewModels));
+                _ea.GetEvent<DataValidationRequiredEvent>().Publish();
+            }
+        }
+
         public GeneratedStructureViewModel()
         {
-            _generatedStructure = new GeneratedStructure() { StructureId = "Design" };
+            _generatedStructure = new GeneratedStructure() { StructureId = "DesignNameMaxLth" };
             InstructionViewModels = new ObservableCollection<InstructionViewModel>();
             InstructionViewModels.Add(new InstructionViewModel());
 
         }
-        public bool isNew { get; private set; } = false;
+        public bool EditMode { get; private set; } = false;
 
-        public bool isHighResolution
-        {
-            get
-            {
-                return _generatedStructure.isHighResolution;
-            }
-            set
-            {
-                if (value != _generatedStructure.isHighResolution)
-                {
-                    _generatedStructure.isHighResolution = value;
-                }
-            }
-        }
         public string StructureId
         {
             get
@@ -65,8 +69,8 @@ namespace OptiMate.ViewModels
             {
                 if (value != _generatedStructure.StructureId)
                 {
-                    if (_model.IsGeneratedStructureIdValid(value))
-                        _generatedStructure.StructureId = value;
+                    _model.RenameGeneratedStructure(_generatedStructure.StructureId, value);
+                    RaisePropertyChangedEvent(nameof(StructureId));
                 }
             }
         }
@@ -103,6 +107,8 @@ namespace OptiMate.ViewModels
             }
         }
 
+        public bool ConfirmRemoveStructurePopupVisibility { get; set; }
+
         public ICommand AddInstructionCommand
         {
             get
@@ -120,14 +126,14 @@ namespace OptiMate.ViewModels
             }
             catch (Exception e)
             {
-                Helpers.SeriLog.AddError("Could not find prior instruction when inserting new instruction, using index=0", e);
+                SeriLogModel.AddError("Could not find prior instruction when inserting new instruction, using index=0", e);
                 index = 0;
             }
             var newInstruction = _model.AddInstruction(_generatedStructure, OperatorTypes.undefined, index+1);
             InstructionViewModels.Insert(index + 1, new InstructionViewModel(newInstruction, _generatedStructure, _model, _ea));
             RaisePropertyChangedEvent(nameof(InstructionViewModels));
             _ea.GetEvent<DataValidationRequiredEvent>().Publish();
-            Helpers.SeriLog.AddLog($"Added new instruction to {_generatedStructure.StructureId}");
+            SeriLogModel.AddLog($"Added new instruction to {_generatedStructure.StructureId}");
         }
 
         public ICommand RemoveInstructionCommand
@@ -150,9 +156,19 @@ namespace OptiMate.ViewModels
         {
             var ivm = (param as object[])[0] as InstructionViewModel;
             ivm.RemoveInstruction();
-            InstructionViewModels.Remove(ivm);
-            _ea.GetEvent<DataValidationRequiredEvent>().Publish();
-            Helpers.SeriLog.AddLog($"REmoved {ivm.SelectedOperator} instruction from {_generatedStructure.StructureId}");
+        }
+
+        public ICommand EditGenStructureCommand
+        {
+            get
+            {
+                return new DelegateCommand(ToggleEditMode);
+            }
+        }
+
+        private void ToggleEditMode(object obj = null)
+        {
+            EditMode ^= true;
         }
 
         internal bool ValidateInputs(List<string> aggregateWarnings)

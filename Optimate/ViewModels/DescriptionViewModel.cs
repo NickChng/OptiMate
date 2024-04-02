@@ -1,4 +1,4 @@
-﻿using Optimate;
+﻿using OptiMate;
 
 namespace OptiMate.ViewModels
 {

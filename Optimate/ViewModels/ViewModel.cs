@@ -19,14 +19,16 @@ using System.Windows.Threading;
 using System.Xml.Serialization;
 using OptiMate.Models;
 using OptiMate.ViewModels;
+using OptiMate.Logging;
 using PropertyChanged;
 using VMS.TPS.Common.Model.API;
 using VMS.TPS.Common.Model.Types;
 using Prism.Events;
 
+
 [assembly: ESAPIScript(IsWriteable = true)]
 
-namespace Optimate.ViewModels
+namespace OptiMate.ViewModels
 {
 
     public class TemplatePointer
@@ -68,6 +70,7 @@ namespace Optimate.ViewModels
         public string CurrentStructureSet { get; set; }
 
         public bool CanLoadTemplates { get; set; } = true;
+        public bool PopupLock { get; private set; } = true;
 
         private List<string> _warnings = new List<string>();
 
@@ -83,11 +86,15 @@ namespace Optimate.ViewModels
             {
                 try
                 {
-                    _selectedTemplate = value;
-                    InitializeProtocol(value);
-                    RaisePropertyChangedEvent(nameof(ProtocolVisibility));
-                    RaisePropertyChangedEvent(nameof(ActiveTemplate));
-                    ValidateControls(null, null);
+                    if (value != null)
+                    {
+                        _selectedTemplate = value;
+                        InitializeProtocol(value);
+                        RaisePropertyChangedEvent(nameof(ProtocolVisibility));
+                        RaisePropertyChangedEvent(nameof(ActiveTemplate));
+                    }
+                    else
+                        StatusMessage = "Please select template...";
                 }
                 catch (Exception ex)
                 {
@@ -98,12 +105,15 @@ namespace Optimate.ViewModels
 
         public TemplateViewModel ActiveTemplate { get; set; }
 
-       
+        public SaveNewTemplateViewModel SaveTemplateVM { get; set; }
+
+        
+
+
 
         private void ValidateControls(object sender, DataErrorsChangedEventArgs e)
         {
             CheckAllInputsValid();
-            RaisePropertyChangedEvent(nameof(allInputsValid));
         }
         public Visibility ProtocolVisibility
         {
@@ -125,12 +135,17 @@ namespace Optimate.ViewModels
             set
             {
                 _working = value;
-                RaisePropertyChangedEvent(nameof(allInputsValid));
                 RaisePropertyChangedEvent(nameof(StartButtonText));
             }
         }
 
-        public bool HasCompletionWarnings { get; set; } = false;
+        public bool HasWarnings
+        {
+            get
+            {
+                return warnings.Count > 0;
+            }
+        }
 
         public string StartButtonText
         {
@@ -144,58 +159,68 @@ namespace Optimate.ViewModels
         }
 
         public bool ScriptDone { get; set; } = false;
-        public string StatusMessage { get; set; } = @"Done";
 
-        public string TemplatePath { get; set; }
+        public bool StatusMessageVisibility
+        {
+            get
+            {
+                return (!string.IsNullOrEmpty(StatusMessage) && Working == false);
+            }
+        }
+        private string _statusMessage = @"Please select a template...";
+        public string StatusMessage
+        {
+            get
+            {
+                return _statusMessage;
+            }
+            set
+            {
+                _statusMessage = value;
+                RaisePropertyChangedEvent(nameof(StatusMessageVisibility));
+            }
+        }
         public string WaitMessage { get; set; }
-
-        private bool _allInputsValid;
-
-        private List<string> _validationWarnings;
-        private List<string> _completionWarnings;
+        private List<string> warnings = new List<string>();
+        public bool AllInputsValid { get; private set; }
         private void CheckAllInputsValid()
         {
-            ClearErrors(nameof(allInputsValid));
-            StatusMessage = "Ready...";
-            _validationWarnings = new List<string>();
+            //ClearErrors(nameof(allInputsValid));
+            warnings = new List<string>();
             if (ActiveTemplate != null)
             {
-                if (ActiveTemplate.ValidateInputs(_validationWarnings))
+                if (ActiveTemplate.ValidateInputs(warnings))
                 {
-                    _allInputsValid = true;
+                    StatusMessage = "Ready...";
+                    AllInputsValid= true;
                 }
                 else
                 {
-                    _allInputsValid = false;
-                    AddError(nameof(allInputsValid), "Inputs are not valid.");
-                    StatusMessage = "Please review input parameters before continuing";
+                    StatusMessage = "Please review input parameters before continuing, click for details...";
+                    AllInputsValid = false;
                 }
             }
             else
             {
-                _allInputsValid = false;
-                AddError(nameof(allInputsValid), "No template loaded.");
+                string error = "Unable to load template, please click for details...";
+                warnings.Add(error);
+                AllInputsValid = false;
+                //AddError(nameof(allInputsValid), error);
             }
-            RaisePropertyChangedEvent(nameof(allInputsValid));
+            RaisePropertyChangedEvent(nameof(HasWarnings));
+            RaisePropertyChangedEvent(nameof(StatusBorderColor));
+            RaisePropertyChangedEvent(nameof(Working));
+
         }
-        public bool allInputsValid
+        public SolidColorBrush StatusBorderColor
         {
             get
             {
-                return _allInputsValid;
+                return HasWarnings ? WarningColour : new SolidColorBrush(Colors.Transparent);
             }
         }
 
-        public SolidColorBrush ScriptCompletionStatusColour
-        {
-            get
-            {
-                return HasCompletionWarnings ? WarningColour : new SolidColorBrush(Colors.PaleGreen);
-            }
-        }
-
-        public DescriptionViewModel ReviewInputValidationVM { get; set; } = new DescriptionViewModel("Review input validation errors", "");
-        public DescriptionViewModel ReviewCompletionWarningsVM { get; set; } = new DescriptionViewModel("Review generated structure warnings", "");
+        public DescriptionViewModel ReviewWarningsVM { get; set; } = new DescriptionViewModel("Review generated structure warnings", "");
 
         public bool ReviewWarningsPopupVisibility { get; set; } = false;
 
@@ -219,53 +244,72 @@ namespace Optimate.ViewModels
 
         private void RegisterEvents()
         {
-            _ea.GetEvent<StructureGeneratedEvent>().Subscribe(UpdateStatus_GeneratedStructure);
+            _ea.GetEvent<StructureGeneratingEvent>().Subscribe(UpdateStatus_GeneratingStructure);
             _ea.GetEvent<DataValidationRequiredEvent>().Subscribe(CheckAllInputsValid);
             _ea.GetEvent<ModelInitializedEvent>().Subscribe(Initialize);
+            _ea.GetEvent<TemplateSavedEvent>().Subscribe(OnTemplateSaved);
+            _ea.GetEvent<LockingPopupEvent>().Subscribe(LockForPopup);
         }
 
-        private void UpdateStatus_GeneratedStructure(StructureGeneratedEventInfo info)
+        private void LockForPopup(bool isLockingPopupActive)
         {
-            WaitMessage = $"{info.Structure.StructureId} created... ({info.IndexInQueue}/{info.TotalToGenerate})";
-            Helpers.SeriLog.AddLog(WaitMessage);
+            PopupLock = !isLockingPopupActive;
+        }
+
+        private void OnTemplateSaved()
+        {
+            ReloadTemplates();
+        }
+
+        private void UpdateStatus_GeneratingStructure(StructureGeneratingEventInfo info)
+        {
+            WaitMessage = $"Creating {info.Structure.StructureId}... ({info.IndexInQueue+1}/{info.TotalToGenerate})";
+            SeriLogUI.AddLog(WaitMessage);
         }
 
         private void InitializeProtocol(TemplatePointer value)
         {
+            warnings.Clear();
             var template = _model.LoadTemplate(value);
             if (template != null)
+            {
                 ActiveTemplate = new TemplateViewModel(template, _model, _ea);
+                ValidateControls(null, null);
+            }
             else
+            {
+                StatusMessage = "Unable to load template, please click info icon for details...";
+                warnings.AddRange(_model.ValidationErrors);
                 ActiveTemplate = null;
+            }
         }
         private void StartWait(string message)
         {
             WaitMessage = message;
             Working = true;
+            RaisePropertyChangedEvent(nameof(StatusMessageVisibility));
         }
         private void EndWait()
         {
             WaitMessage = "";
             Working = false;
+            RaisePropertyChangedEvent(nameof(StatusMessageVisibility));
         }
         private void Initialize()
         {
             try
             {
+                SeriLogUI.Initialize(_model.LogPath, _model.CurrentUser); //    Initialize logger to same directory 
                 _ui.Invoke(() =>
                 {
-                    var AssemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                    TemplatePath = Path.Combine(AssemblyPath, @"Templates");
                     ReloadTemplates();
-
                     CurrentStructureSet = _model.StructureSetId;
                 });
-
             }
             catch (Exception ex)
             {
-                Helpers.SeriLog.AddLog(string.Format("{0}\r\n{1}\r\n{2}", ex.Message, ex.InnerException, ex.StackTrace));
-                MessageBox.Show(string.Format("{0}\r\n{1}\r\n{2}", ex.Message, ex.InnerException, ex.StackTrace));
+                string errorMessage = string.Format("Exception during ViewModel initialization: {0}\r\n{1}\r\n{2}", ex.Message, ex.InnerException, ex.StackTrace);
+                MessageBox.Show(errorMessage);
             }
             EndWait();
 
@@ -284,26 +328,27 @@ namespace Optimate.ViewModels
             }
         }
 
-        public ICommand ToggleWarningVisibilityCommand
+        public ICommand ShowWarningsCommand
         {
             get
             {
-                return new DelegateCommand(ToggleWarningVisibility);
+                return new DelegateCommand(ShowWarnings);
             }
         }
 
-        public ICommand ShowValidationErrorsCommand
+        private void ShowWarnings(object obj)
         {
-            get
+            ReviewWarningsPopupVisibility ^= true;
+            if (ScriptDone)
             {
-                return new DelegateCommand(ShowValidationErrors);
+                ReviewWarningsVM.Id = "Review generated structure warnings";
+                ReviewWarningsVM.Description = HTMLWarningFormatter(warnings);
             }
-        }
-
-        private void ShowValidationErrors(object obj)
-        {
-            ReviewInputValidationPopupVisibility ^= true;
-            ReviewInputValidationVM.Description = HTMLWarningFormatter(_validationWarnings);
+            else
+            {
+                ReviewWarningsVM.Id = "Review input validation warnings";
+                ReviewWarningsVM.Description = HTMLWarningFormatter(warnings);
+            }
         }
 
         private string HTMLWarningFormatter(List<string> validationWarnings)
@@ -316,10 +361,6 @@ namespace Optimate.ViewModels
             return html;
         }
 
-        public void ToggleWarningVisibility(object param = null)
-        {
-            ReviewWarningsPopupVisibility ^= true;
-        }
         public ICommand OpenTemplateFolderCommand
         {
             get
@@ -328,26 +369,35 @@ namespace Optimate.ViewModels
             }
         }
 
+        public ICommand SaveAsPersonalCommand
+        {
+            get
+            {
+                return new DelegateCommand(SaveAsPersonal);
+            }
+        }
+
+        private void SaveAsPersonal(object param = null)
+        {
+            if (ActiveTemplate == null)
+            {
+                StatusMessage = "No template loaded.";
+            }
+            else
+            {
+                SaveTemplateVM = new SaveNewTemplateViewModel(_ea, _model, ActiveTemplate.TemplateDisplayName);
+                RaisePropertyChangedEvent(nameof(SaveTemplateVM));
+                NewTemplateIdPopupVisibility ^= true;
+            }
+        }
+
+        public bool NewTemplateIdPopupVisibility { get; set; } = false;
         public ICommand ReloadTemplateCommand
         {
             get
             {
                 return new DelegateCommand(ReloadTemplates);
             }
-        }
-
-        public ICommand ReviewCompletionWarnignsCommand
-        {
-            get
-            {
-                return new DelegateCommand(ReviewCompletionWarnings);
-            }
-        }
-
-        private void ReviewCompletionWarnings(object obj)
-        {
-            ReviewCompletionWarningsVM.Description = HTMLWarningFormatter(_completionWarnings);
-            ReviewWarningsPopupVisibility ^= true;
         }
 
         public async void Start(object param = null)
@@ -362,16 +412,26 @@ namespace Optimate.ViewModels
             _warnings.Clear();
             try
             {
-                (HasCompletionWarnings, _completionWarnings) = await _model.GenerateStructures();
-                RaisePropertyChangedEvent(nameof(ScriptCompletionStatusColour));
+                (warnings) = await _model.GenerateStructures();
+                if (HasWarnings)
+                {
+                    StatusMessage = "Structures generated with warnings, click for details";
+                }
+                else
+                {
+                    StatusMessage = "Structures generated successfully";
+                }
+                WaitMessage = "";
             }
             catch (Exception ex)
             {
                 string errorMessage = string.Format("Error during structure creation...");
-                Helpers.SeriLog.AddError(errorMessage);
+                SeriLogUI.AddError(errorMessage);
                 MessageBox.Show(string.Format("{0}\r\n{1}\r\n{2}", ex.Message, ex.InnerException, ex.StackTrace));
                 WaitMessage = errorMessage;
             }
+            RaisePropertyChangedEvent(nameof(StatusBorderColor));
+            RaisePropertyChangedEvent(nameof(HasWarnings));
             CanLoadTemplates = true;
             Working = false;
             ScriptDone = true;
@@ -381,47 +441,35 @@ namespace Optimate.ViewModels
 
         public async void OpenTemplateFolder(object param = null)
         {
-            await Task.Run(() => Process.Start(TemplatePath));
+            try
+            {
+                await Task.Run(() => Process.Start(Environment.GetEnvironmentVariable("WINDIR") + @"\explorer.exe", _model.GetUserTemplatePath()));
+            }
+            catch (Exception ex)
+            {
+                SeriLogUI.AddError(string.Format("Error opening template folder: {0}\r\n{1}\r\n{2}", ex.Message, ex.InnerException, ex.StackTrace));
+                MessageBox.Show(string.Format("Error opening template folder: {0}\r\n{1}\r\n{2}", ex.Message, ex.InnerException, ex.StackTrace));
+
+            }
         }
 
         public void ReloadTemplates(object param = null)
         {
-            WaitMessage = "Loading Templates...";
+            ActiveTemplate = null;
+            warnings.Clear();
             Working = true;
             ScriptDone = false;
             TemplatePointers.Clear();
             TemplatePointers.SuppressNotification = true;
-
-            try
+            foreach (TemplatePointer tp in _model.GetTemplates())
             {
-                XmlSerializer Ser = new XmlSerializer(typeof(OptiMateTemplate));
-
-                foreach (var file in Directory.GetFiles(TemplatePath, "*.xml"))
-                {
-                    using (StreamReader protocol = new StreamReader(file))
-                    {
-                        try
-                        {
-                            var OMProtocol = (OptiMateTemplate)Ser.Deserialize(protocol);
-                            TemplatePointers.Add(new TemplatePointer() { TemplateDisplayName = OMProtocol.TemplateDisplayName, TemplatePath = file });
-                        }
-                        catch (Exception ex)
-                        {
-                            Helpers.SeriLog.AddLog(string.Format("Unable to read protocol file: {0}\r\n\r\nDetails: {1}", file, ex.InnerException));
-                            MessageBox.Show(string.Format("Unable to read protocol file {0}\r\n\r\nDetails: {1}", file, ex.InnerException));
-
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(string.Format("{0}\r\n{1}\r\n{2}", ex.Message, ex.InnerException, ex.StackTrace));
+                TemplatePointers.Add(tp);
             }
             TemplatePointers.SuppressNotification = false;
             Working = false;
             WaitMessage = "";
         }
 
+      
     }
 }
