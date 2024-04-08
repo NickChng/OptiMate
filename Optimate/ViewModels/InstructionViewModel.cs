@@ -400,7 +400,9 @@ namespace OptiMate.ViewModels
                 switch (SelectedOperator)
                 {
                     case OperatorTypes.crop:
-                        return (_instruction as Crop).InternalCrop;
+                        return (_instruction as Crop).InternalCrop; 
+                    case OperatorTypes.asymmetricCrop:
+                        return (_instruction as AsymmetricCrop).InternalCrop;
                     default:
                         return false;
                 }
@@ -411,6 +413,10 @@ namespace OptiMate.ViewModels
                 {
                     case OperatorTypes.crop:
                         (_instruction as Crop).InternalCrop = value;
+                        isModified = true;
+                        break;
+                    case OperatorTypes.asymmetricCrop:
+                        (_instruction as AsymmetricCrop).InternalCrop = value;
                         isModified = true;
                         break;
                 }

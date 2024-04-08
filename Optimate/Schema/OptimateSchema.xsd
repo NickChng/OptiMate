@@ -40,7 +40,7 @@
       <xs:element minOccurs="0" maxOccurs="unbounded" name="Alias" type="xs:string"/>
     </xs:sequence>
     <xs:attribute name="TemplateStructureId" type="xs:string" use="required"/>
-    <xs:attribute name="EclipseStructureId" type="xs:string" fixed=""/>
+    <xs:attribute name="EclipseStructureId" type="xs:string" />
   </xs:complexType>
   <xs:complexType name="GeneratedStructure">
     <xs:complexContent mixed="false">
