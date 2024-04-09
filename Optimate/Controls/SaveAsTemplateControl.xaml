@@ -24,7 +24,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" Text="New template name:  " Foreground="Black" FontSize="13" FontWeight="Bold" Margin="0,0,0,0" VerticalAlignment="Center"/>
-                <TextBox Grid.Column="1" Text="{Binding NewTemplateDisplayName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="10,0,10,0" Background="LightGoldenrodYellow" VerticalContentAlignment="Center"/>
+                <TextBox Grid.Column="1" Text="{Binding NewTemplateDisplayName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="10,0,10,0" Background="LightGoldenrodYellow" VerticalContentAlignment="Center" Style="{StaticResource TextBoxStyle1}"/>
                 <Button Grid.Column="2" Style="{StaticResource ButtonStyle_Medium}" Width="50" Command="{Binding SaveCommand}" CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Popup}}}">
                     <TextBlock Text="Save" FontWeight="DemiBold"/>
                 </Button>

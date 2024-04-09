@@ -48,7 +48,7 @@ namespace OptiMate
                 VM.IsErrorAcknowledged = true;
         }
 
-      
+
 
         private void TemplateStructures_MouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -70,7 +70,7 @@ namespace OptiMate
         }
 
         delegate Point GetPositionDelegate(IInputElement element);
-        
+
         ListViewItem GetListViewItem(int index, ListView LV)
         {
             if (LV.ItemContainerGenerator.Status != GeneratorStatus.ContainersGenerated)
@@ -185,6 +185,5 @@ namespace OptiMate
             }
         }
 
-        
     }
 }

@@ -262,7 +262,7 @@
                                            MouseLeave="ListView_MouseLeave" 
                                           dd:DragDrop.IsDragSource="True"
                                           DragDrop.Drop="ListView_Drop" 
-                                          DragDrop.DragOver="DragGenStructure_ListView_DragOver" >
+                                          DragDrop.DragOver="DragGenStructure_ListView_DragOver">
                                     <ListView.ItemTemplate>
                                         <DataTemplate>
                                             <Grid>
@@ -296,7 +296,7 @@
                                                             <TextBlock Text="{Binding StructureId}" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontWeight="bold" FontSize="14" Margin="5,0,0,0"
                                              Visibility="{Binding EditMode, Converter={StaticResource VisibilityInverseConverter}}"/>
                                                             <TextBox Text="{Binding StructureId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="5,0,0,0" HorizontalAlignment="Center" HorizontalContentAlignment="Center" FontWeight="bold" FontSize="14" VerticalAlignment="Bottom" MinWidth="130" MaxWidth="130"
-                                             Visibility="{Binding EditMode, Converter={StaticResource VisibilityConverter}}" Background="{Binding StructureIdColor, UpdateSourceTrigger=PropertyChanged,FallbackValue=Orange}"/>
+                                             Visibility="{Binding EditMode, Converter={StaticResource VisibilityConverter}}" Background="{Binding StructureIdColor, UpdateSourceTrigger=PropertyChanged,FallbackValue=Orange}" Style="{StaticResource TextBoxStyle2}"/>
                                                         </StackPanel>
                                                     </Grid>
                                                 </Grid>
