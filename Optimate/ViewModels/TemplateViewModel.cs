@@ -66,9 +66,17 @@ namespace OptiMate.ViewModels
         private void RegisterEvents()
         {
             ErrorsChanged += PublishToEventAggregator;
+            _ea.GetEvent<RemovedGeneratedStructureEvent>().Subscribe(RemoveGeneratedStructureFromList);
 
 
         }
+
+        private void RemoveGeneratedStructureFromList(RemovedGeneratedStructureEventInfo info)
+        {
+            var genStructureVMtoRemove = GeneratedStructuresVM.FirstOrDefault(x => x.StructureId == info.RemovedStructureId);
+            GeneratedStructuresVM.Remove(genStructureVMtoRemove);
+        }
+
         private void PublishToEventAggregator(object sender, DataErrorsChangedEventArgs e)
         {
             _ea.GetEvent<DataValidationRequiredEvent>().Publish();

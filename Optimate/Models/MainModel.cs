@@ -20,7 +20,7 @@ using System.Collections.ObjectModel;
 namespace OptiMate.Models
 {
 
-    
+
     public partial class MainModel
     {
 
@@ -134,7 +134,7 @@ namespace OptiMate.Models
                 completionWarnings.AddRange(structureModel.GetCompletionWarnings());
                 _ea.GetEvent<StructureGeneratedEvent>().Publish(new StructureGeneratedEventInfo { Structure = genStructure, IndexInQueue = index++, TotalToGenerate = _template.GeneratedStructures.Count() });
             }
-           return completionWarnings;
+            return completionWarnings;
         }
 
         private List<TemplateStructure> GetAugmentedTemplateStructures(string structureId)
@@ -273,7 +273,7 @@ namespace OptiMate.Models
         {
             return (eclipseStructureId.Count() > 0 && eclipseStructureId.Count() <= 16);
         }
-      
+
         private bool IsValidReferenceStructure(string genStructureId, string templateStructureId)
         {
             var augmentedList = GetAugmentedTemplateStructures(genStructureId);
@@ -312,7 +312,7 @@ namespace OptiMate.Models
             var newTemplateStructure = new TemplateStructure()
             {
                 TemplateStructureId = getNewTemplateStructureId(),
-                Alias = new string[] {}
+                Alias = new string[] { }
             };
             var templateList = _template.TemplateStructures.ToList();
             templateList.Add(newTemplateStructure);
@@ -333,6 +333,7 @@ namespace OptiMate.Models
 
         private void RemoveAllReferencesToTemplateStructure(TemplateStructure removedStructure)
         {
+            List<string> toRemove = new List<string>();
             foreach (GeneratedStructure genStructure in _template.GeneratedStructures)
             {
                 var instructionItems = genStructure.Instructions.Items.ToList();
@@ -365,6 +366,46 @@ namespace OptiMate.Models
                             }
                             break;
                     }
+                }
+                if (GenStructureWillBeEmpty(genStructure))
+                {
+                    toRemove.Add(genStructure.StructureId);
+                }
+            }
+            foreach (string id in toRemove)
+            {
+                RemoveGeneratedStructure(id);
+            }
+        }
+
+        private bool GenStructureWillBeEmpty(GeneratedStructure genStructure)
+        {
+            if (genStructure == null)
+                return true;
+            else if (genStructure.Instructions.Items.Count() == 0)
+                return true;
+            else
+            {
+                var firstIntruction = genStructure.Instructions.Items.First();
+                switch (firstIntruction)
+                {
+                    case Or or:
+                        if (_template.TemplateStructures.Select(x => x.TemplateStructureId).Contains(or.TemplateStructureId))
+                            return false;
+                        else
+                            return true;
+                    case And and:
+                        return true;
+                    case Crop crop:
+                        return true;
+                    case SubFrom subfrom:
+                        return true;
+                    case ConvertDose _:
+                        return false;
+                    case ConvertResolution _:
+                        return false;
+                    default:
+                        return false;
                 }
             }
         }
@@ -468,16 +509,20 @@ namespace OptiMate.Models
         internal void RemoveGeneratedStructure(string structureId)
         {
             var genStructures = _template.GeneratedStructures.ToList();
-            genStructures.Remove(genStructures.FirstOrDefault(x => x.StructureId == structureId));
-            _template.GeneratedStructures = genStructures.ToArray();
-            _ea.GetEvent<RemovedGeneratedStructureEvent>().Publish(new RemovedGeneratedStructureEventInfo { RemovedStructureId = structureId });
+            var toRemove = genStructures.FirstOrDefault(x => x.StructureId == structureId);
+            if (toRemove != null)
+            {
+                genStructures.Remove(toRemove);
+                _template.GeneratedStructures = genStructures.ToArray();
+                _ea.GetEvent<RemovedGeneratedStructureEvent>().Publish(new RemovedGeneratedStructureEventInfo { RemovedStructureId = structureId });
+            }
         }
 
         private bool IsGeneratedStructureIdValid(string value)
         {
-            if (value.Length <= 16 
-                && value.Length > 0 
-                && _template.GeneratedStructures.Select(x => x.StructureId).Count(y=> string.Equals(y, value, StringComparison.OrdinalIgnoreCase)) <= 1)
+            if (value.Length <= 16
+                && value.Length > 0
+                && _template.GeneratedStructures.Select(x => x.StructureId).Count(y => string.Equals(y, value, StringComparison.OrdinalIgnoreCase)) <= 1)
             {
                 return true;
             }

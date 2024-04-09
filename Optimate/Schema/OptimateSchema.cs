@@ -90,10 +90,6 @@ namespace OptiMate {
         
         private string eclipseStructureIdField;
         
-        public TemplateStructure() {
-            this.eclipseStructureIdField = "";
-        }
-        
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute("Alias")]
         public string[] Alias {
@@ -646,6 +642,8 @@ namespace OptiMate {
         
         private string dicomTypeField;
         
+        private string structureColorField;
+        
         public GeneratedStructure() {
             this.dicomTypeField = "CONTROL";
         }
@@ -680,6 +678,17 @@ namespace OptiMate {
             }
             set {
                 this.dicomTypeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string StructureColor {
+            get {
+                return this.structureColorField;
+            }
+            set {
+                this.structureColorField = value;
             }
         }
     }

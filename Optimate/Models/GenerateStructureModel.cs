@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using VMS.TPS.Common.Model.API;
 using OptiMate.Logging;
 using System.Windows.Interop;
+using System.Drawing;
+using System.Windows.Media.Animation;
 
 namespace OptiMate.Models
 {
@@ -601,7 +603,9 @@ namespace OptiMate.Models
                             Enum.TryParse(genStructure.DicomType.ToUpper(), out DT);
                             bool validNewStructure = S.CanAddStructure(DT.ToString(), genStructure.StructureId);
                             if (validNewStructure)
+                            {
                                 generatedEclipseStructure = S.AddStructure(DT.ToString(), genStructure.StructureId);
+                            }
                             else
                             {
                                 _warnings.Add($"Unable to create structure {genStructure.StructureId}...");
@@ -613,6 +617,7 @@ namespace OptiMate.Models
                             SeriLogModel.AddWarning($"Structure {genStructure.StructureId} already exists, overwriting...");
                             generatedEclipseStructure.SegmentVolume = generatedEclipseStructure.SegmentVolume.And(generatedEclipseStructure.SegmentVolume.Not());
                         }
+                        SetStructureColor(generatedEclipseStructure, genStructure.StructureColor);
 
                     }));
                     InstructionCompletionStatus status = InstructionCompletionStatus.Pending;
@@ -676,6 +681,36 @@ namespace OptiMate.Models
                 {
                     SeriLogModel.AddError($"Exce[topm reached generating structure {genStructure.StructureId}", ex);
                     throw new Exception($"Exception reached in GenerateStructure, please contact your OptiMate admnistrator.");
+                }
+            }
+
+            private void SetStructureColor(Structure generatedEclipseStructure, string structureColor)
+            {
+                try
+                {
+                    if (string.IsNullOrEmpty(structureColor))
+                    {
+                        SeriLogModel.AddWarning($"No color specified for structure {generatedEclipseStructure.Id}, using default color...");
+                        return;
+                    }
+                    var colArray = structureColor.Split(',');
+                    if (colArray.Length == 3)
+                    {
+                        byte r = Convert.ToByte(colArray[0]);
+                        byte g = Convert.ToByte(colArray[1]);
+                        byte b = Convert.ToByte(colArray[2]);
+                        generatedEclipseStructure.Color = System.Windows.Media.Color.FromRgb(r, g, b);
+                        SeriLogModel.AddLog($"Setting color for structure {generatedEclipseStructure.Id} to R:{r},G:{g},B:{b}...");
+                    }
+                    else
+                    {
+                        SeriLogModel.AddWarning($"Invalid color format for structure {generatedEclipseStructure.Id}, using default color...");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    SeriLogModel.AddError($"Exception reached in SetStructureColor for {generatedEclipseStructure.Id}", ex);
+                    throw new Exception($"Exception reached in SetStructureColor for {generatedEclipseStructure.Id}, please contact your OptiMate admnistrator.");
                 }
             }
 

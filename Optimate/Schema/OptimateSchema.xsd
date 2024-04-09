@@ -20,6 +20,11 @@
       <xs:length value="0" />
     </xs:restriction>
   </xs:simpleType>
+  <xs:simpleType name="colorString">
+    <xs:restriction base="xs:string">
+      <xs:length value="11" />
+    </xs:restriction>
+  </xs:simpleType>
   <xs:simpleType name="MarginTypes">
     <xs:restriction base="xs:string">
       <xs:enumeration value="Outer" />
@@ -66,6 +71,7 @@
         </xs:sequence>
         <xs:attribute name="StructureId" type="xs:string" use="required"/>
         <xs:attribute name="DicomType" type="xs:string" default="CONTROL"/>
+        <xs:attribute name="StructureColor" type="OptiMate:colorString" />
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
