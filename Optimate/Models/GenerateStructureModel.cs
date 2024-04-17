@@ -11,11 +11,20 @@ using OptiMate.Logging;
 using System.Windows.Interop;
 using System.Drawing;
 using System.Windows.Media.Animation;
+using System.Windows.Documents;
 
 namespace OptiMate.Models
 {
     public partial class MainModel
     {
+        internal bool isDoseLevelValid(ushort? value)
+        {
+            if (value == null || value < 0 || value > 50000)
+                return false;
+            else
+                return true;
+        }
+
         private class GenerateStructureModel
         {
 
@@ -165,6 +174,7 @@ namespace OptiMate.Models
                                 generatedEclipseStructure.SegmentVolume = generatedEclipseStructure.SegmentVolume.Margin(IsotropicMargin);
                             else
                                 generatedEclipseStructure.SegmentVolume = generatedEclipseStructure.SegmentVolume.Margin(-IsotropicMargin);
+                            SeriLogModel.AddLog($"Applied isotropic margin of {IsotropicMargin}mm to {genStructure.StructureId}");
                             completionStatus = InstructionCompletionStatus.Completed;
                         }
                         else
@@ -428,6 +438,46 @@ namespace OptiMate.Models
                 return completionStatus;
             }
 
+
+            private async Task<InstructionCompletionStatus> ApplyInstruction(ConvertDose convertDoseInstruction)
+            {
+                InstructionCompletionStatus completionStatus = InstructionCompletionStatus.Completed;
+                bool Done = await Task.Run(() => ew.AsyncRunPlanContext((p, pl, S, ui) =>
+                {
+                    if (pl == null)
+                    {
+                        completionStatus = InstructionCompletionStatus.Failed;
+                        var warning = $"Convert dose instruction failed as no plan was found";
+                        _warnings.Add(warning);
+                        SeriLogModel.AddWarning(warning);
+                    }
+                    else if (pl.Dose == null)
+                    {
+                        completionStatus = InstructionCompletionStatus.Failed;
+                        var warning = $"Convert dose instruction failed as no dose distribution was found";
+                        _warnings.Add(warning);
+                        SeriLogModel.AddWarning(warning);
+                    }
+                    else
+                    {
+                        try
+                        {
+                            pl.DoseValuePresentation = VMS.TPS.Common.Model.Types.DoseValuePresentation.Absolute;
+                            generatedEclipseStructure.ConvertDoseLevelToStructure(pl.Dose, new VMS.TPS.Common.Model.Types.DoseValue(convertDoseInstruction.DoseLevel, VMS.TPS.Common.Model.Types.DoseValue.DoseUnit.cGy));
+                            SeriLogModel.AddLog($"{genStructure.StructureId} has been converted to the {convertDoseInstruction.DoseLevel} cGy isodose level...");
+                        }
+                        catch (Exception e)
+                        {
+                            completionStatus = InstructionCompletionStatus.Failed;
+                            var warning = $"Convert dose instruction failed with exception: {e.Message}";
+                            _warnings.Add(warning);
+                            SeriLogModel.AddWarning(warning);
+                        }
+                    }
+                }));
+                return completionStatus;
+            }
+
             private void CheckForHRConversion(TemplateStructure templateTarget, Structure eclipseTarget)
             {
                 if (eclipseTarget.IsHighResolution && !generatedEclipseStructure.IsHighResolution)
@@ -452,7 +502,7 @@ namespace OptiMate.Models
                         var warning = $"Target of AND operation [{andInstruction.TemplateStructureId}] for structure {genStructure.StructureId} is null, clearing generated structure...";
                         _warnings.Add(warning);
                         SeriLogModel.AddWarning(warning);
-                        generatedEclipseStructure.SegmentVolume = generatedEclipseStructure.SegmentVolume.And(generatedEclipseStructure.SegmentVolume.Not());
+                        generatedEclipseStructure = ClearStructure(S, generatedEclipseStructure);
                         completionStatus = InstructionCompletionStatus.CompletedWithWarning;
                     }
                     else if (EclipseTarget.IsEmpty)
@@ -499,7 +549,7 @@ namespace OptiMate.Models
                         else
                         {
                             SeriLogModel.AddWarning($"Performing SUB of {subInstruction.TemplateStructureId} from {genStructure.StructureId}...");
-                            generatedEclipseStructure.SegmentVolume = generatedEclipseStructure.SegmentVolume.Sub(EclipseTarget.SegmentVolume);
+                            generatedEclipseStructure = ClearStructure(S, generatedEclipseStructure);
                         }
                         S.RemoveStructure(EclipseTarget);
                     }
@@ -532,7 +582,7 @@ namespace OptiMate.Models
                         else
                         {
                             SeriLogModel.AddWarning($"Performing SUBFROM of {genStructure.StructureId} from {subFromInstruction.TemplateStructureId}...");
-                            generatedEclipseStructure.SegmentVolume = EclipseTarget.SegmentVolume.Sub(generatedEclipseStructure.SegmentVolume);
+                            generatedEclipseStructure = ClearStructure(S, generatedEclipseStructure);
                         }
                         S.RemoveStructure(EclipseTarget);
                     }
@@ -540,6 +590,25 @@ namespace OptiMate.Models
                 return completionStatus;
             }
 
+            private Structure ClearStructure(StructureSet ss, Structure generatedEclipseStructure)
+            {
+                var structureId = generatedEclipseStructure.Id;
+                var dicomType = generatedEclipseStructure.DicomType;
+                var color = generatedEclipseStructure.Color;
+                if (generatedEclipseStructure.DicomType == "")
+                {
+                    SeriLogModel.AddWarning($"Clearing structure {generatedEclipseStructure.Id} by segment as dicom type is null...");
+                    generatedEclipseStructure.SegmentVolume = generatedEclipseStructure.SegmentVolume.Sub(generatedEclipseStructure.SegmentVolume.Margin(5));
+                    return generatedEclipseStructure; // workaround as structures with type "" cannot be removed
+                }
+                else
+                {
+                    ss.RemoveStructure(generatedEclipseStructure);
+                    var newStructure = ss.AddStructure(dicomType, structureId);
+                    newStructure.Color = color;
+                    return newStructure;
+                }
+            }
 
             private async Task<InstructionCompletionStatus> ApplyInstruction(Or orInstruction)
             {
@@ -615,7 +684,7 @@ namespace OptiMate.Models
                         else
                         {
                             SeriLogModel.AddWarning($"Structure {genStructure.StructureId} already exists, overwriting...");
-                            generatedEclipseStructure.SegmentVolume = generatedEclipseStructure.SegmentVolume.And(generatedEclipseStructure.SegmentVolume.Not());
+                            generatedEclipseStructure = ClearStructure(S, generatedEclipseStructure);
                         }
                         SetStructureColor(generatedEclipseStructure, genStructure.StructureColor);
 
@@ -661,6 +730,10 @@ namespace OptiMate.Models
                                 if (subFromInstruction != null)
                                     status = await ApplyInstruction(subFromInstruction);
                                 break;
+                            case ConvertDose convertDoseInstruction:
+                                if (convertDoseInstruction != null)
+                                    status = await ApplyInstruction(convertDoseInstruction);
+                                break;
                         }
                         if (status == InstructionCompletionStatus.Failed)
                         {
@@ -671,8 +744,10 @@ namespace OptiMate.Models
                     {
                         Done = await Task.Run(() => ew.AsyncRunStructureContext((p, S, ui) =>
                         {
-                            generatedEclipseStructure.SegmentVolume = generatedEclipseStructure.SegmentVolume.And(generatedEclipseStructure.SegmentVolume.Not());
+                            SeriLogUI.AddLog($"Clearing and aborting structure {genStructure.StructureId} due to failed instruction...");
+                            generatedEclipseStructure = ClearStructure(S, generatedEclipseStructure);
                         }));
+
                     }
                     await ConvertToHighResolution();
 

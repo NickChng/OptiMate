@@ -12,6 +12,7 @@ using System.Windows.Input;
 using Prism.Events;
 using OptiMate.ViewModels;
 using OptiMate.Logging;
+using System.Windows;
 
 namespace OptiMate.ViewModels
 {
@@ -25,6 +26,14 @@ namespace OptiMate.ViewModels
         public ObservableCollection<GeneratedStructureViewModel> GeneratedStructuresVM { get; set; } = new ObservableCollection<GeneratedStructureViewModel>();
         public ObservableCollection<TemplateStructureViewModel> TemplateStructuresVM { get; set; } = new ObservableCollection<TemplateStructureViewModel>();
 
+        public bool HasTemplateStructures
+        {
+            get
+            {
+                return _template.TemplateStructures.Count() > 0;
+            }
+        }
+     
         public int SelectedTSIndex { get; set; }
         public int SelectedGSIndex { get; set; }
         public ConfirmationViewModel ConfirmRemoveTemplateStructureVM { get; set; }
@@ -60,7 +69,7 @@ namespace OptiMate.ViewModels
             {
                 TemplateStructuresVM.Add(new TemplateStructureViewModel(structure, _model, _ea));
             }
-
+            RaisePropertyChangedEvent(nameof(HasTemplateStructures));
         }
 
         private void RegisterEvents()
@@ -86,6 +95,9 @@ namespace OptiMate.ViewModels
         {
             // Design use only
             GeneratedStructuresVM.Add(new GeneratedStructureViewModel());
+            GeneratedStructuresVM.Add(new GeneratedStructureViewModel());
+            GeneratedStructuresVM.Add(new GeneratedStructureViewModel());
+            TemplateStructuresVM.Add(new TemplateStructureViewModel());
             TemplateStructuresVM.Add(new TemplateStructureViewModel());
         }
 
@@ -149,6 +161,7 @@ namespace OptiMate.ViewModels
             var tSVM = new TemplateStructureViewModel(t, _model, _ea, true);
             TemplateStructuresVM.Add(tSVM);
             NotifyErrorsChanged(nameof(AddTemplateStructure));
+            RaisePropertyChangedEvent(nameof(HasTemplateStructures));
         }
 
         public ICommand RemoveTemplateStructureCommand
@@ -156,6 +169,14 @@ namespace OptiMate.ViewModels
             get
             {
                 return new DelegateCommand(ConfirmRemoveTemplateStructure);
+            }
+        }
+
+        public bool HasGeneratedStructures 
+        {
+            get
+            {
+                return _template.GeneratedStructures.Count() > 0;
             }
         }
 
@@ -168,6 +189,7 @@ namespace OptiMate.ViewModels
                 ConfirmRemoveTemplateStructureVM = new ConfirmationViewModel("Removing this will remove all operations referencing this structure. Continue?", new DelegateCommand(RemoveTemplateStructure), RemoveStructureParam);
                 tSVM.ConfirmRemoveStructurePopupVisibility = true;
             }
+            RaisePropertyChangedEvent(nameof(HasTemplateStructures));
         }
         private void RemoveTemplateStructure(object param)
         {

@@ -78,6 +78,25 @@ namespace OptiMate.ViewModels
             }
         }
  
+        public ushort DoseLevel
+        {
+            get 
+            {
+                if (SelectedOperator == OperatorTypes.convertDose)
+                    return (_instruction as ConvertDose).DoseLevel; 
+                else
+                    return 0;
+            }
+            set
+            {
+                if (_model.isDoseLevelValid(value))
+                {
+                    (_instruction as ConvertDose).DoseLevel = value;
+                    isModified = true;
+                }
+
+            }
+        }
 
         public string marginValueToolTip
         {
@@ -434,6 +453,7 @@ namespace OptiMate.ViewModels
             {
                 _isModified = value;
                 RaisePropertyChangedEvent(nameof(WarningVisibility_OperatorChanged));
+                _ea.GetEvent<DataValidationRequiredEvent>().Publish();
             }
         }
         public string IsoCropOffset
@@ -651,7 +671,7 @@ namespace OptiMate.ViewModels
         {
             get
             {
-                if (!string.Equals(DefaultTemplateStructureId, TargetTemplateStructureId, StringComparison.OrdinalIgnoreCase) && !isModified)
+                if (isModified)
                 {
                     return Visibility.Visible;
                 }
@@ -744,7 +764,6 @@ namespace OptiMate.ViewModels
                     default:
                         return;
                 }
-                RaisePropertyChangedEvent(nameof(WarningVisibility_TargetChanged));
                 ValidateTargetTemplateStructureId();
             }
         }
@@ -754,6 +773,10 @@ namespace OptiMate.ViewModels
             ClearErrors(nameof(TargetTemplateStructureId));
             if (instructionHasTarget())
             {
+                if (!string.Equals(DefaultTemplateStructureId, TargetTemplateStructureId, StringComparison.OrdinalIgnoreCase))
+                    isModified = true;
+                else
+                    isModified = false;
                 if (string.IsNullOrEmpty(TargetTemplateStructureId))
                 {
                     int instructionNumber = _model.GetInstructionNumber(_parentGeneratedStructure.StructureId, _instruction);

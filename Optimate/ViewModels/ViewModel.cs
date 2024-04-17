@@ -24,6 +24,7 @@ using PropertyChanged;
 using VMS.TPS.Common.Model.API;
 using VMS.TPS.Common.Model.Types;
 using Prism.Events;
+using System.Windows.Navigation;
 
 
 [assembly: ESAPIScript(IsWriteable = true)]
@@ -90,8 +91,6 @@ namespace OptiMate.ViewModels
                     {
                         _selectedTemplate = value;
                         InitializeProtocol(value);
-                        RaisePropertyChangedEvent(nameof(ProtocolVisibility));
-                        RaisePropertyChangedEvent(nameof(ActiveTemplate));
                     }
                     else
                         StatusMessage = "Please select template...";
@@ -115,16 +114,50 @@ namespace OptiMate.ViewModels
         {
             CheckAllInputsValid();
         }
-        public Visibility ProtocolVisibility
+        public bool HasTemplateStructures
         {
             get
             {
-                if (ActiveTemplate != null)
-                    return Visibility.Visible;
+                if (ActiveTemplate != null && ActiveTemplate.HasTemplateStructures)
+                    return true;
                 else
-                    return Visibility.Collapsed;
+                    return false;
             }
         }
+
+        public bool HasTemplateStructuresWarning
+        {
+            get
+            {
+                if (ActiveTemplate != null && !ActiveTemplate.HasTemplateStructures)
+                    return true;
+                else
+                    return false;
+            }
+        }
+
+        public bool HasGeneratedStructures
+        {
+            get
+            {
+                if (ActiveTemplate != null && ActiveTemplate.HasGeneratedStructures)
+                    return true;
+                else
+                    return false;
+            }
+        }
+
+        public bool HasGeneratedStructuresWarning
+        {
+            get
+            {
+                if (ActiveTemplate != null && !ActiveTemplate.HasGeneratedStructures)
+                    return true;
+                else
+                    return false;
+            }
+        }
+
         private bool _working;
         public bool Working
         {
@@ -245,10 +278,49 @@ namespace OptiMate.ViewModels
         private void RegisterEvents()
         {
             _ea.GetEvent<StructureGeneratingEvent>().Subscribe(UpdateStatus_GeneratingStructure);
+            _ea.GetEvent<NewTemplateStructureEvent>().Subscribe(AddedTemplateStructure);
+            _ea.GetEvent<NewGeneratedStructureEvent>().Subscribe(AddedGeneratedStructure);
+            _ea.GetEvent<RemovedGeneratedStructureEvent>().Subscribe(RemovedGeneratedStructure);
+            _ea.GetEvent<RemovedTemplateStructureEvent>().Subscribe(RemovedTemplateStructure);
+            _ea.GetEvent<GeneratedStructureCleaningUpEvent>().Subscribe(UpdateStatus_TempStructureCleanup);
             _ea.GetEvent<DataValidationRequiredEvent>().Subscribe(CheckAllInputsValid);
             _ea.GetEvent<ModelInitializedEvent>().Subscribe(Initialize);
             _ea.GetEvent<TemplateSavedEvent>().Subscribe(OnTemplateSaved);
             _ea.GetEvent<LockingPopupEvent>().Subscribe(LockForPopup);
+        }
+
+        private void RemovedGeneratedStructure(RemovedGeneratedStructureEventInfo info)
+        {
+            RefreshViewModelVisibility();
+        }
+
+        private void AddedGeneratedStructure(NewGeneratedStructureEventInfo info)
+        {
+            RefreshViewModelVisibility();
+        }
+
+        private void RemovedTemplateStructure(RemovedTemplateStructureEventInfo info)
+        {
+            RefreshViewModelVisibility();
+        }
+
+        private void AddedTemplateStructure(NewTemplateStructureEventInfo info)
+        {
+            RefreshViewModelVisibility();
+        }
+
+        private void UpdateStatus_TempStructureCleanup(string structureRemoving)
+        {
+            WaitMessage = $"Removing temporary structure {structureRemoving}...";
+            SeriLogUI.AddLog(WaitMessage);
+        }
+
+        private void RefreshViewModelVisibility()
+        {
+            RaisePropertyChangedEvent(nameof(HasTemplateStructures));
+            RaisePropertyChangedEvent(nameof(HasTemplateStructuresWarning));
+            RaisePropertyChangedEvent(nameof(HasGeneratedStructures));
+            RaisePropertyChangedEvent(nameof(HasGeneratedStructuresWarning));
         }
 
         private void LockForPopup(bool isLockingPopupActive)
@@ -282,6 +354,8 @@ namespace OptiMate.ViewModels
                 warnings.AddRange(_model.ValidationErrors);
                 ActiveTemplate = null;
             }
+            RaisePropertyChangedEvent(nameof(ActiveTemplate));
+            RefreshViewModelVisibility();
         }
         private void StartWait(string message)
         {

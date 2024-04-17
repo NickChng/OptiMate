@@ -193,6 +193,39 @@ namespace OptiMate.Converters
         }
     }
 
+
+    public class ExpanderConverter : IMultiValueConverter
+    {
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            double MinHeight = double.Parse(parameter as string);
+            double AnimationVar = (double)values[0];
+            switch (values.Count())
+            {
+                case 0:
+                    return MinHeight;
+                case 1:
+                    return AnimationVar * MinHeight;
+                case 2:
+                    return AnimationVar * MinHeight;
+                case 3:
+                    double? HeightPerElement = double.Parse(values[1] as string);
+                    int? NumElements = values[2] as int?;
+                    if (HeightPerElement != null && NumElements != null)
+                        return AnimationVar * Math.Max((double)NumElements * (double)HeightPerElement, MinHeight);
+                    else return MinHeight;
+                default:
+                    return MinHeight;
+            }
+            //return result;
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        {
+            throw new Exception("Not implemented");
+        }
+    }
+
     public class AsymmetricCropVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
@@ -216,6 +249,29 @@ namespace OptiMate.Converters
         }
     }
 
+    public class ConvertDoseVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        {
+            if (value == null)
+                return Visibility.Collapsed;
+            else
+            {
+                OperatorTypes op = (OperatorTypes)value;
+                if (op == OperatorTypes.convertDose)
+                    return Visibility.Visible;
+                else
+                    return Visibility.Collapsed;
+            }
+
+        }
+        public object ConvertBack(object value, Type targetTypes,
+               object parameter, System.Globalization.CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+    
     public class AsymmetricMarginVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)

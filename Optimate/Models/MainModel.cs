@@ -134,7 +134,31 @@ namespace OptiMate.Models
                 completionWarnings.AddRange(structureModel.GetCompletionWarnings());
                 _ea.GetEvent<StructureGeneratedEvent>().Publish(new StructureGeneratedEventInfo { Structure = genStructure, IndexInQueue = index++, TotalToGenerate = _template.GeneratedStructures.Count() });
             }
+            foreach (var tempStructure in _template.GeneratedStructures.Where(x=>x.IsTemporary))
+            {
+                _ea.GetEvent<GeneratedStructureCleaningUpEvent>().Publish(tempStructure.StructureId);
+                await RemoveTemporaryGenStructure(tempStructure.StructureId);
+            }
             return completionWarnings;
+        }
+
+        private async Task RemoveTemporaryGenStructure(string structureId)
+        {
+            try
+            {
+                await _ew.AsyncRunStructureContext((p, ss, ui) =>
+                {
+                    var structureToRemove = ss.Structures.First(x => x.Id == structureId);
+                    if (structureToRemove != null)
+                        ss.RemoveStructure(structureToRemove);
+                });
+                SeriLogModel.AddLog($"Temporary structure {structureId} removed from template {_template.TemplateDisplayName}");
+            }
+            catch (Exception ex)
+            {
+                SeriLogModel.AddError($"Error deleting temporary structure {structureId} from template {_template.TemplateDisplayName}", ex);
+            }
+           
         }
 
         private List<TemplateStructure> GetAugmentedTemplateStructures(string structureId)
@@ -390,7 +414,7 @@ namespace OptiMate.Models
                 switch (firstIntruction)
                 {
                     case Or or:
-                        if (_template.TemplateStructures.Select(x => x.TemplateStructureId).Contains(or.TemplateStructureId))
+                        if (GetAugmentedTemplateStructures(genStructure.StructureId).Select(x=>x.TemplateStructureId).Contains(or.TemplateStructureId))
                             return false;
                         else
                             return true;

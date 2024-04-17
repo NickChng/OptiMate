@@ -640,11 +640,14 @@ namespace OptiMate {
         
         private string structureIdField;
         
+        private bool isTemporaryField;
+        
         private string dicomTypeField;
         
         private string structureColorField;
         
         public GeneratedStructure() {
+            this.isTemporaryField = false;
             this.dicomTypeField = "CONTROL";
         }
         
@@ -666,6 +669,18 @@ namespace OptiMate {
             }
             set {
                 this.structureIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        [System.ComponentModel.DefaultValueAttribute(false)]
+        public bool IsTemporary {
+            get {
+                return this.isTemporaryField;
+            }
+            set {
+                this.isTemporaryField = value;
             }
         }
         
@@ -707,6 +722,7 @@ namespace OptiMate {
         [System.Xml.Serialization.XmlElementAttribute("And", typeof(And))]
         [System.Xml.Serialization.XmlElementAttribute("AsymmetricCrop", typeof(AsymmetricCrop))]
         [System.Xml.Serialization.XmlElementAttribute("AsymmetricMargin", typeof(AsymmetricMargin))]
+        [System.Xml.Serialization.XmlElementAttribute("ConvertDose", typeof(ConvertDose))]
         [System.Xml.Serialization.XmlElementAttribute("ConvertResolution", typeof(ConvertResolution))]
         [System.Xml.Serialization.XmlElementAttribute("Crop", typeof(Crop))]
         [System.Xml.Serialization.XmlElementAttribute("Margin", typeof(Margin))]

@@ -650,16 +650,16 @@
             <Setter.Value>
                 <!-- Trun off default selection-->
                 <ControlTemplate TargetType="{x:Type ListViewItem}">
-                    <Grid Background="Transparent">
+                    <Grid >
                         <Border x:Name="Bd" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" 
-                        Margin="0,2,2,2"
+                        Margin="2,-1,2,-1"
                         CornerRadius="5,5,5,5"
                     Background="{TemplateBinding Background}"
                     Padding="{TemplateBinding Padding}" 
                     SnapsToDevicePixels="true">
                         </Border>
                         <ContentPresenter Name="CP" 
-                        Margin="0,2,2,2"
+                        Margin="0,0,0,0"
                     HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
                     SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" 
                     VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
@@ -672,23 +672,105 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-        <Style.Triggers>
-            <!--<MultiDataTrigger>
-            <MultiDataTrigger.Conditions>
-                <Condition Binding="{Binding RelativeSource={RelativeSource AncestorLevel=3, AncestorType=Grid}, Path=IsMouseOver}" Value="false"/>
-                <Condition Binding="{Binding ElementName=AutoPlanner, Path=DataContext.DragSelected}" Value="false"/>
-            </MultiDataTrigger.Conditions>
-            <Setter Property="IsSelected" Value="false"></Setter>
-        </MultiDataTrigger>
-        <DataTrigger Binding="{Binding Path=Pinned, UpdateSourceTrigger=PropertyChanged}" Value="True">
-            <Setter Property="FontWeight" Value="Bold" />
-        </DataTrigger>
-        <Trigger Property="IsSelected" Value="True">
-            <Setter Property="FontWeight" Value="Bold" />
-        </Trigger>-->
-
-        </Style.Triggers>
     </Style>
+    <Style x:Key="DraggableListViewItemStyle2" TargetType="ListViewItem">
+        <Setter Property="Template">
+            <Setter.Value>
+                <!-- Trun off default selection-->
+                <ControlTemplate TargetType="{x:Type ListViewItem}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Border Grid.Row="0" Name="InstructionSeparator"  Validation.ErrorTemplate="{x:Null}" Background="Gray" Height="2" Opacity="1">
+                            <Border.Style>
+                                <Style TargetType="{x:Type Border}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource PreviousData}}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                        </Border>
+                        <Border Grid.Row="1" x:Name="Bd" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"  
+                            Margin="-1,-1,0,-1" 
+                            Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}" 
+                            SnapsToDevicePixels="true">
+                        </Border>
+                        <ContentPresenter Grid.Row="1" Name="CP"  Margin="0,0,0,0"
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" 
+                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <!--<Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=(ItemsControl.AlternationIndex)}" Value="1"/>-->
+                                <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListViewItem}}, Path=(ItemsControl.AlternationIndex)}" Value="0"/>
+                            </MultiDataTrigger.Conditions>
+                            <MultiDataTrigger.Setters>
+                                <Setter TargetName="InstructionSeparator" Property="Background">
+                                    <Setter.Value>
+                                        <SolidColorBrush>
+                                            <SolidColorBrush.Color>
+                                                <Color R="208" G="248" B="255" A="255"/>
+                                            </SolidColorBrush.Color>
+                                        </SolidColorBrush>
+                                    </Setter.Value>
+                                </Setter>
+                            </MultiDataTrigger.Setters>
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <!--<Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=(ItemsControl.AlternationIndex)}" Value="1"/>-->
+                                <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListViewItem}}, Path=(ItemsControl.AlternationIndex)}" Value="1"/>
+                            </MultiDataTrigger.Conditions>
+                            <MultiDataTrigger.Setters>
+                                <Setter TargetName="InstructionSeparator" Property="Background">
+                                    <Setter.Value>
+                                        <SolidColorBrush>
+                                            <SolidColorBrush.Color>
+                                                <Color R="255" G="255" B="255" A="255"/>
+                                            </SolidColorBrush.Color>
+                                        </SolidColorBrush>
+                                    </Setter.Value>
+                                </Setter>
+                            </MultiDataTrigger.Setters>
+                        </MultiDataTrigger>
+                    </ControlTemplate.Triggers>
+                    <!--<ControlTemplate.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=(ItemsControl.AlternationIndex)}" Value="1"/>
+                                <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListViewItem}}, Path=(ItemsControl.AlternationIndex)}" Value="0"/>
+                            </MultiDataTrigger.Conditions>
+                            <MultiDataTrigger.Setters>
+                                <Setter Property="Background" Value="GhostWhite"></Setter>
+                            </MultiDataTrigger.Setters>
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=(ItemsControl.AlternationIndex)}" Value="1"/>
+                                <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListViewItem}}, Path=(ItemsControl.AlternationIndex)}" Value="1"/>
+                            </MultiDataTrigger.Conditions>
+                            <MultiDataTrigger.Setters>
+                                <Setter Property="Background" Value="White"/>
+                            </MultiDataTrigger.Setters>
+                        </MultiDataTrigger>
+                    </ControlTemplate.Triggers>-->
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Storyboard x:Key="CollapsePanel" Duration="0:0:0.5">
+        <DoubleAnimation BeginTime="0:0:0" Duration="0:0:0.5" Storyboard.TargetProperty="Tag" By="0.01" To="0"/>
+    </Storyboard>
+    <Storyboard x:Key="ExpandPanel" Duration="0:0:0.5">
+        <DoubleAnimation BeginTime="0:0:0" Duration="0:0:0.5" Storyboard.TargetProperty="Tag" By="0.01" To="1"/>
+    </Storyboard>
     <Style x:Key="ListViewStyle1" TargetType="{x:Type ListView}">
         <Setter Property="Background" Value="White"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
@@ -704,23 +786,11 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ListView}">
-                    <Border x:Name="Bd" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" Padding="1" SnapsToDevicePixels="true">
+                    <Border x:Name="Bd" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" Padding="0" SnapsToDevicePixels="true">
                         <ScrollViewer Focusable="false" Padding="{TemplateBinding Padding}">
                             <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
                         </ScrollViewer>
                     </Border>
-                    <ControlTemplate.Triggers>
-                        <!--<Trigger Property="IsEnabled" Value="false">
-                        <Setter Property="Background" TargetName="Bd" Value="Black"/>
-                    </Trigger>
-                    <MultiTrigger>
-                        <MultiTrigger.Conditions>
-                            <Condition Property="IsGrouping" Value="true"/>
-                            <Condition Property="VirtualizingPanel.IsVirtualizingWhenGrouping" Value="false"/>
-                        </MultiTrigger.Conditions>
-                        <Setter Property="ScrollViewer.CanContentScroll" Value="false"/>
-                    </MultiTrigger>-->
-                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

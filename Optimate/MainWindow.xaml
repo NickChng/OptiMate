@@ -11,6 +11,7 @@
         xmlns:controls="clr-namespace:OptiMate.Controls"
         xmlns:converters="clr-namespace:OptiMate.Converters"
         xmlns:dd="urn:gong-wpf-dragdrop"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=viewModels:ViewModel, IsDesignTimeCreatable=True}"
         Title="NoPAUSE OptiMate (v2.0)" Height="1000" Width="1400" ResizeMode="NoResize">
@@ -28,6 +29,7 @@
             <converters:InstructionNumberConverter x:Key="InstructionNumberConverter"/>
             <converters:CropVisibilityConverter x:Key="CropVisibilityConverter"/>
             <converters:AsymmetricCropVisibilityConverter x:Key="AsymmetricCropVisibilityConverter"/>
+            <converters:ConvertDoseVisibilityConverter x:Key="ConvertDoseVisibilityConverter"/>
             <converters:MarginVisibilityConverter x:Key="MarginVisibilityConverter"/>
             <converters:AsymmetricMarginVisibilityConverter x:Key="AsymmetricMarginVisibilityConverter"/>
             <converters:BoolToString x:Key="BoolToString"/>
@@ -39,6 +41,7 @@
             <converters:VisibilityConverter x:Key="VisibilityConverter"/>
             <converters:VisibilityInverseConverter x:Key="VisibilityInverseConverter"/>
             <converters:VisibilityMultiConverter x:Key="VisibilityMultiConverter"/>
+            <converters:ExpanderConverter x:Key="ExpanderConverter"/>
         </ResourceDictionary>
     </Window.Resources>
     <Grid KeyDown="KeyDown" Margin="20,0,20,10" IsEnabled="{Binding PopupLock,UpdateSourceTrigger=PropertyChanged}">
@@ -141,8 +144,12 @@
                             <TextBlock Text="When generating new structures, OptiMate v2.0 uses Template Structures to reference contours in Eclipse for operations. Use the list below to confirm the mapping for this patient/structure set." FontStyle="Italic" FontSize="13" Margin="5,0,0,0"/>
                         </Grid>
                         <Grid Grid.Row="2" Grid.ColumnSpan="2" >
+                            <Border HorizontalAlignment="Stretch" Background="Gainsboro"
+                                    VerticalAlignment="Stretch" Visibility="{Binding HasTemplateStructuresWarning, Converter={StaticResource VisibilityConverter}, UpdateSourceTrigger=PropertyChanged}">
+                                <TextBlock Text="Template does not use existing structures" FontSize="14" FontStyle="Italic" FontWeight="DemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" Background="Transparent"/>
+                            </Border>
                             <ScrollViewer Margin="0,5,0,5" Focusable="true" VerticalAlignment="Stretch" VerticalScrollBarVisibility="Auto" PreviewMouseWheel="ScrollViewer_PreviewMouseWheel"
-                                          Template="{DynamicResource ScrollViewerControlTemplate1}" CanContentScroll="True" Background="Transparent" Visibility="{Binding ProtocolVisibility, UpdateSourceTrigger=PropertyChanged}">
+                                          Template="{DynamicResource ScrollViewerControlTemplate1}" CanContentScroll="True" Background="Transparent" Visibility="{Binding HasTemplateStructures, Converter={StaticResource VisibilityConverter}, UpdateSourceTrigger=PropertyChanged}">
                                 <ListView Style="{StaticResource ListViewStyle1}" ItemContainerStyle="{StaticResource DraggableListViewItemStyle}" AlternationCount="2" Name="TemplateStructureListView" SelectedIndex="{Binding ActiveTemplate.SelectedTSIndex}"
                                           ItemsSource="{Binding ActiveTemplate.TemplateStructuresVM, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanLoadTemplates, UpdateSourceTrigger=PropertyChanged}" 
                                           MouseDown="TemplateStructures_MouseDown"
@@ -218,15 +225,15 @@
                         </Grid>
                     </Grid>
                 </TabItem>
-                <TabItem Header="Generated Structures" Height="34" VerticalAlignment="Bottom" HorizontalAlignment="Center" Width="151">
+                <TabItem Header="Generated Structures" Height="34" VerticalAlignment="Top" HorizontalAlignment="Center" Width="151">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
-                        <Grid Grid.Row="0" Margin="0,5,0,0" Visibility="{Binding ProtocolVisibility, UpdateSourceTrigger=PropertyChanged}" Height="25" >
+                        <Grid Grid.Row="0" Margin="0,5,0,0" Height="25" >
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="220"/>
+                                <ColumnDefinition Width="250"/>
                                 <ColumnDefinition Width="220"/>
                                 <ColumnDefinition Width="170"/>
                                 <ColumnDefinition Width="*"/>
@@ -253,21 +260,25 @@
                                 <TextBlock Text="Operator Options" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                         </Grid>
-                        <Grid Grid.Row="1" Visibility="{Binding ProtocolVisibility, UpdateSourceTrigger=PropertyChanged}">
+                        <Border Grid.Row="1" HorizontalAlignment="Stretch" Background="Gainsboro"
+                                VerticalAlignment="Stretch" Visibility="{Binding HasGeneratedStructuresWarning, Converter={StaticResource VisibilityConverter}, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBlock Text="Template does not generate any structures. Add them using the '+' button above" FontSize="14" FontStyle="Italic" FontWeight="DemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" Background="Transparent"/>
+                        </Border>
+                        <Grid Grid.Row="1" Visibility="{Binding HasGeneratedStructures, Converter={StaticResource VisibilityConverter}, UpdateSourceTrigger=PropertyChanged}">
                             <ScrollViewer Margin="0,0,0,0" Focusable="true" VerticalAlignment="Stretch" VerticalScrollBarVisibility="Auto" PreviewMouseWheel="ScrollViewer_PreviewMouseWheel"
                                           Template="{DynamicResource ScrollViewerControlTemplate1}" CanContentScroll="True" Background="Transparent" Visibility="{Binding ProtocolVisibility, UpdateSourceTrigger=PropertyChanged}">
                                 <ListView Style="{StaticResource ListViewStyle1}" ItemContainerStyle="{StaticResource DraggableListViewItemStyle}" AlternationCount="2" Name="GenStructureListView" SelectedIndex="{Binding ActiveTemplate.SelectedGSIndex}"
-                                          ItemsSource="{Binding ActiveTemplate.GeneratedStructuresVM, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanLoadTemplates, UpdateSourceTrigger=PropertyChanged}"
-                                           MouseDown="GenStructures_MouseDown"
+                                          ItemsSource="{Binding ActiveTemplate.GeneratedStructuresVM, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanLoadTemplates, UpdateSourceTrigger=PropertyChanged}" 
+                                          MouseDown="GenStructures_MouseDown"
                                            MouseLeave="ListView_MouseLeave" 
                                           dd:DragDrop.IsDragSource="True"
                                           DragDrop.Drop="ListView_Drop" 
                                           DragDrop.DragOver="DragGenStructure_ListView_DragOver">
                                     <ListView.ItemTemplate>
                                         <DataTemplate>
-                                            <Grid>
+                                            <Grid Margin="0,5,0,5">
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="220"/>
+                                                    <ColumnDefinition Width="250"/>
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
                                                 <Grid Grid.Column="0">
@@ -276,13 +287,14 @@
                                                         <ColumnDefinition Width="Auto"/>
                                                         <ColumnDefinition Width="Auto"/>
                                                         <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
                                                     <Grid Grid.Column="0">
                                                         <Popup Visibility="Visible" PlacementTarget="{Binding ElementName=RemoveGeneratedStructureButton}" Width="600" StaysOpen="False" Placement="Right" HorizontalOffset="5" AllowsTransparency="True" IsOpen="{Binding ConfirmRemoveStructurePopupVisibility, UpdateSourceTrigger=PropertyChanged}">
                                                             <controls:ConfirmationControl MinHeight="35" Height="Auto" DataContext="{Binding DataContext.ActiveTemplate.ConfirmRemoveGeneratedStructureVM, ElementName=MainScriptWindow}" Width="600"/>
                                                         </Popup>
                                                         <Button Style="{StaticResource ButtonStyle_Small}" Command="{Binding DataContext.ActiveTemplate.ConfirmRemoveGeneratedStructureCommand, ElementName=MainScriptWindow}" 
-                                                                ToolTip="Remove structure" Name="RemoveGeneratedStructureButton"
+                                                                ToolTip="Remove structure" Name="RemoveGeneratedStructureButton" Validation.ErrorTemplate="{x:Null}"
                                                                HorizontalAlignment="Left" CommandParameter="{Binding}" VerticalAlignment="Center" Margin="3,0,0,0">
                                                             <Image Source="Resources/x.png" Stretch="Fill" />
                                                         </Button>
@@ -291,27 +303,63 @@
                                                     <Button Grid.Column="2" Style="{StaticResource ButtonStyle_Small}" Command="{Binding EditGenStructureCommand}" ToolTip="Edit generated structure">
                                                         <Image  Source="Resources/edit.png" RenderOptions.BitmapScalingMode="HighQuality" Stretch="Fill"/>
                                                     </Button>
-                                                    <Grid Grid.Column="3" Margin="10,0,0,0">
-                                                        <StackPanel Orientation="Horizontal"  VerticalAlignment="Center" HorizontalAlignment="Center">
-                                                            <TextBlock Text="{Binding StructureId}" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontWeight="bold" FontSize="14" Margin="5,0,0,0"
-                                             Visibility="{Binding EditMode, Converter={StaticResource VisibilityInverseConverter}}"/>
-                                                            <TextBox Text="{Binding StructureId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="5,0,0,0" HorizontalAlignment="Center" HorizontalContentAlignment="Center" FontWeight="bold" FontSize="14" VerticalAlignment="Bottom" MinWidth="130" MaxWidth="130"
-                                             Visibility="{Binding EditMode, Converter={StaticResource VisibilityConverter}}" Background="{Binding StructureIdColor, UpdateSourceTrigger=PropertyChanged,FallbackValue=Orange}" Style="{StaticResource TextBoxStyle2}"/>
-                                                        </StackPanel>
+                                                    <Grid Grid.Column="3">
+                                                        <Grid>
+                                                            <Grid.RowDefinitions>
+                                                                <RowDefinition Height="*"/>
+                                                                <RowDefinition Height="*"/>
+                                                            </Grid.RowDefinitions>
+                                                            <StackPanel Grid.Row="0" Orientation="Horizontal"  VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="5,0,0,0">
+                                                                <TextBlock Text="{Binding StructureId}" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontWeight="bold" FontSize="14" 
+                                                                    Visibility="{Binding EditMode, Converter={StaticResource VisibilityInverseConverter}}"/>
+                                                                <TextBox Text="{Binding StructureId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="5,5,5,5" HorizontalAlignment="Center" HorizontalContentAlignment="Center" FontWeight="bold" FontSize="14" VerticalAlignment="Bottom" MinWidth="130" MaxWidth="150"
+                                                                    Visibility="{Binding EditMode, Converter={StaticResource VisibilityConverter}}" Background="{Binding StructureIdColor, UpdateSourceTrigger=PropertyChanged,FallbackValue=Orange}" Style="{StaticResource TextBoxStyle2}"/>
+                                                            </StackPanel>
+                                                            <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="15,10,0,0" Visibility="{Binding EditMode, Converter={StaticResource VisibilityConverter}, FallbackValue=Visible}">
+                                                                <TextBlock Text="Temporary Structure: " FontSize="10"/>
+                                                                <CheckBox Style="{StaticResource CheckBoxStyle1}" IsChecked="{Binding isTemporary, UpdateSourceTrigger=PropertyChanged}"/>
+                                                            </StackPanel>
+                                                        </Grid>
+
                                                     </Grid>
+                                                    <controls:WarningControl Grid.Column="4" Visibility="{Binding WarningVisibility_GenStructureChanged, FallbackValue=Visible}" Height="24" Width="25" Margin="3,0,10,0" Padding="2,2,2,2" ToolTip="Structure has been modified"/>
                                                 </Grid>
                                                 <Grid Grid.Column="1" >
-                                                    <ListView Style="{StaticResource ListViewStyle1}" ItemContainerStyle="{StaticResource DraggableListViewItemStyle}" 
-                                            ItemsSource="{Binding InstructionViewModels, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" HorizontalAlignment="Left">
+                                                    <ListView Style="{StaticResource ListViewStyle1}" Validation.ErrorTemplate="{x:Null}"
+                                                              ItemContainerStyle="{DynamicResource DraggableListViewItemStyle2}" Name="InstructionListElement"
+                                                     Background="Transparent" HorizontalAlignment="Left" ItemsSource="{Binding InstructionViewModels, UpdateSourceTrigger=PropertyChanged}" AlternationCount="2">
                                                         <ListView.ItemTemplate>
                                                             <DataTemplate>
-                                                                <Grid Background="Transparent" Margin="10,3,0,3">
+                                                                <Grid Name="InstructionGrid" Margin="5,2,0,2" Validation.ErrorTemplate="{x:Null}"
+                                                                      Visibility="{Binding RelativeSource={RelativeSource AncestorType=ListView}, Path=DataContext.EditMode, Converter={StaticResource VisibilityConverter}}">
+                                                                    <Grid.Tag>
+                                                                        <sys:Double>0.0</sys:Double>
+                                                                    </Grid.Tag>
+                                                                    <Grid.MaxHeight>
+                                                                        <MultiBinding Converter="{StaticResource ExpanderConverter}" ConverterParameter="200">
+                                                                            <Binding Path="Tag" RelativeSource="{RelativeSource Self}"/>
+                                                                        </MultiBinding>
+                                                                    </Grid.MaxHeight>
+                                                                    <Grid.Style>
+                                                                        <Style TargetType="Grid">
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListView}, Path=DataContext.EditMode, UpdateSourceTrigger=PropertyChanged, FallbackValue=True}" Value="True">
+                                                                                    <DataTrigger.EnterActions>
+                                                                                        <BeginStoryboard Storyboard="{StaticResource ExpandPanel}"/>
+                                                                                    </DataTrigger.EnterActions>
+                                                                                    <DataTrigger.ExitActions>
+                                                                                        <BeginStoryboard Storyboard="{StaticResource CollapsePanel}"/>
+                                                                                    </DataTrigger.ExitActions>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Grid.Style>
                                                                     <Grid.ColumnDefinitions>
-                                                                        <ColumnDefinition Width="200"/>
+                                                                        <ColumnDefinition Width="210"/>
                                                                         <ColumnDefinition Width="170"/>
                                                                         <ColumnDefinition Width="*"/>
                                                                     </Grid.ColumnDefinitions>
-                                                                    <Grid Grid.Column="0" >
+                                                                    <Grid Grid.Column="0" Margin="0,0,0,0">
                                                                         <Grid.ColumnDefinitions>
                                                                             <ColumnDefinition Width="Auto"/>
                                                                             <ColumnDefinition Width="*"/>
@@ -379,193 +427,205 @@
                                                                             <TextBlock Text="..." />
                                                                         </Button>
                                                                     </Grid>
-                                                                    <StackPanel Grid.Column="1" HorizontalAlignment="Stretch"  Margin="10,0,0,0" Orientation="Horizontal" Visibility="{Binding VisibilityTargetSelection, UpdateSourceTrigger=PropertyChanged}">
+                                                                    <StackPanel Grid.Column="1" HorizontalAlignment="Stretch"  Margin="15,0,0,0" Orientation="Horizontal" Visibility="{Binding VisibilityTargetSelection, UpdateSourceTrigger=PropertyChanged}">
                                                                         <ComboBox ToolTip="{Binding DefaultTemplateStructureId, UpdateSourceTrigger=PropertyChanged}" Background="{Binding TargetTemplateBackgroundColor, UpdateSourceTrigger=PropertyChanged}"
                                                                               ItemsSource="{Binding TargetTemplateIds}" Template="{StaticResource OptiComboBoxControlTemplate}"  Style="{StaticResource OptiStructureComboBoxStyle}"  PreviewMouseWheel="ScrollViewer_PreviewMouseWheel" SelectedItem="{Binding TargetTemplateStructureId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" HorizontalContentAlignment="Center"  VerticalContentAlignment="Center" Margin="0,0,0,0" VerticalAlignment="Center">
                                                                         </ComboBox>
                                                                         <controls:WarningControl Visibility="{Binding WarningVisibility_TargetChanged}" Height="24" Width="25" Margin="3,0,0,0" Padding="2,2,2,2" ToolTip="Template target has changed" HorizontalAlignment="Left"/>
                                                                     </StackPanel>
-                                                                    <Grid Grid.Column="2" Margin="10,0,0,0" Visibility="{Binding SelectedOperator, Converter={StaticResource AsymmetricMarginVisibilityConverter}}">
-                                                                        <Grid.ColumnDefinitions>
-                                                                            <ColumnDefinition Width="Auto"/>
-                                                                            <ColumnDefinition Width="Auto"/>
-                                                                            <ColumnDefinition Width="Auto"/>
-                                                                            <ColumnDefinition Width="Auto"/>
-                                                                            <ColumnDefinition Width="Auto"/>
-                                                                            <ColumnDefinition Width="Auto"/>
-                                                                            <ColumnDefinition Width="Auto"/>
-                                                                        </Grid.ColumnDefinitions>
-                                                                        <Border  Width="70" Grid.Column="0" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
-                                                                            <StackPanel Orientation="Vertical">
-                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
-                                                                                    <TextBlock Text="Right (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
-                                                                                </Border>
-                                                                                <TextBox Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center"  
+                                                                    <Grid Grid.Column="2" Margin="10,0,0,0" HorizontalAlignment="Stretch">
+                                                                        <Grid Visibility="{Binding SelectedOperator, Converter={StaticResource AsymmetricMarginVisibilityConverter}}">
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                            </Grid.ColumnDefinitions>
+                                                                            <Border  Width="70" Grid.Column="0" Margin="5,0,5,0" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                                <StackPanel Orientation="Vertical">
+                                                                                    <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                        <TextBlock Text="Right (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
+                                                                                    </Border>
+                                                                                    <TextBox Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center"  
                                                                                          Text="{Binding RightMargin, UpdateSourceTrigger=PropertyChanged}" />
-                                                                            </StackPanel>
-                                                                        </Border>
-                                                                        <Border  Width="70" Grid.Column="1" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
-                                                                            <StackPanel Orientation="Vertical">
-                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
-                                                                                    <TextBlock Text="Left (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
-                                                                                </Border>
-                                                                                <TextBox Text="{Binding LeftMargin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center"/>
-                                                                            </StackPanel>
-                                                                        </Border>
-                                                                        <Border Width="70" Grid.Column="2" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
-                                                                            <StackPanel Orientation="Vertical">
-                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
-                                                                                    <TextBlock Text="Ant (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
-                                                                                </Border>
-                                                                                <TextBox Text="{Binding AntMargin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center" />
-                                                                            </StackPanel>
-                                                                        </Border>
-                                                                        <Border  Width="70" Grid.Column="3" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
-                                                                            <StackPanel Orientation="Vertical">
-                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
-                                                                                    <TextBlock Text="Post (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
-                                                                                </Border>
-                                                                                <TextBox Text="{Binding PostMargin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center"/>
-                                                                            </StackPanel>
-                                                                        </Border>
-                                                                        <Border Width="70" Grid.Column="4" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
-                                                                            <StackPanel Orientation="Vertical">
-                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
-                                                                                    <TextBlock Text="Sup (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
-                                                                                </Border>
-                                                                                <TextBox Text="{Binding SupMargin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center" />
-                                                                            </StackPanel>
-                                                                        </Border>
-                                                                        <Border  Width="70" Grid.Column="5" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
-                                                                            <StackPanel Orientation="Vertical">
-                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
-                                                                                    <TextBlock Text="Inf (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
-                                                                                </Border>
-                                                                                <TextBox Text="{Binding InfMargin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center" />
-                                                                            </StackPanel>
-                                                                        </Border>
-                                                                        <Border Width="90" Grid.Column="6" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
-                                                                            <StackPanel Orientation="Vertical">
-                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
-                                                                                    <TextBlock Text="Margin Type" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="Outer expands the structure by the margin value, Inner shrinks the structure."/>
-                                                                                </Border>
-                                                                                <ComboBox SelectedItem="{Binding SelectedMargin, UpdateSourceTrigger=PropertyChanged}" ItemsSource="{Binding MarginTypeOptions}" Style="{StaticResource OptiStructureComboBoxStyle2}" Template="{StaticResource OptiComboBoxControlTemplate}" Grid.Row="1" Width="70" Margin="0,2,0,2" Grid.Column="6" HorizontalAlignment="Center" HorizontalContentAlignment="Center"
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                            <Border  Width="70" Grid.Column="1" Margin="5,0,5,0" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                                <StackPanel Orientation="Vertical">
+                                                                                    <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                        <TextBlock Text="Left (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
+                                                                                    </Border>
+                                                                                    <TextBox Text="{Binding LeftMargin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center"/>
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                            <Border Width="70" Grid.Column="2" Margin="5,0,5,0" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                                <StackPanel Orientation="Vertical">
+                                                                                    <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                        <TextBlock Text="Ant (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
+                                                                                    </Border>
+                                                                                    <TextBox Text="{Binding AntMargin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center" />
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                            <Border  Width="70" Grid.Column="3" Margin="5,0,5,0" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                                <StackPanel Orientation="Vertical">
+                                                                                    <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                        <TextBlock Text="Post (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
+                                                                                    </Border>
+                                                                                    <TextBox Text="{Binding PostMargin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center"/>
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                            <Border Width="70" Grid.Column="4" Margin="5,0,5,0" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                                <StackPanel Orientation="Vertical">
+                                                                                    <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                        <TextBlock Text="Sup (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
+                                                                                    </Border>
+                                                                                    <TextBox Text="{Binding SupMargin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center" />
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                            <Border  Width="70" Grid.Column="5" Margin="5,0,5,0" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                                <StackPanel Orientation="Vertical">
+                                                                                    <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                        <TextBlock Text="Inf (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
+                                                                                    </Border>
+                                                                                    <TextBox Text="{Binding InfMargin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center" />
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                            <Border Width="90" Grid.Column="6" Margin="5,0,5,0" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                                <StackPanel Orientation="Vertical">
+                                                                                    <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                        <TextBlock Text="Margin Type" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="Outer expands the structure by the margin value, Inner shrinks the structure."/>
+                                                                                    </Border>
+                                                                                    <ComboBox SelectedItem="{Binding SelectedMargin, UpdateSourceTrigger=PropertyChanged}" ItemsSource="{Binding MarginTypeOptions}" Style="{StaticResource OptiStructureComboBoxStyle2}" Template="{StaticResource OptiComboBoxControlTemplate}" Grid.Row="1" Width="70" Margin="0,2,0,2" Grid.Column="6" HorizontalAlignment="Center" HorizontalContentAlignment="Center"
           />
-                                                                            </StackPanel>
-                                                                        </Border>
-                                                                    </Grid>
-                                                                    <Grid Grid.Column="2" Visibility="{Binding SelectedOperator, Converter={StaticResource CropVisibilityConverter}}">
-                                                                        <Grid.ColumnDefinitions>
-                                                                            <ColumnDefinition Width="Auto"/>
-                                                                            <ColumnDefinition Width="Auto"/>
-                                                                        </Grid.ColumnDefinitions>
-                                                                        <Border Width="100" Grid.Column="0" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
-                                                                            <StackPanel Orientation="Vertical">
-                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
-                                                                                    <TextBlock Text="Iso. Offset (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
-                                                                                </Border>
-                                                                                <TextBox Text="{Binding IsoCropOffset, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
-                                                                            </StackPanel>
-                                                                        </Border>
-                                                                        <Border Width="90" Grid.Column="1" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
-                                                                            <StackPanel Orientation="Vertical">
-                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
-                                                                                    <TextBlock Text="Internal Crop" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
-                                                                                </Border>
-                                                                                <CheckBox IsChecked="{Binding InternalCrop, Mode=TwoWay}" Style="{StaticResource CheckBoxStyle1}" HorizontalAlignment="Center" Margin="5,5,0,0" Width="25" VerticalAlignment="Center" HorizontalContentAlignment="Center" />
-                                                                            </StackPanel>
-                                                                        </Border>
-                                                                    </Grid>
-                                                                    <Grid Grid.Column="2" Visibility="{Binding SelectedOperator, Converter={StaticResource MarginVisibilityConverter}}">
-                                                                        <Grid.ColumnDefinitions>
-                                                                            <ColumnDefinition Width="Auto"/>
-                                                                            <ColumnDefinition Width="Auto"/>
-                                                                        </Grid.ColumnDefinitions>
-                                                                        <Border Width="100" Grid.Column="0" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
-                                                                            <StackPanel Orientation="Vertical">
-                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
-                                                                                    <TextBlock Text="Margin (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="Value for the margin in mm."/>
-                                                                                </Border>
-                                                                                <TextBox Text="{Binding IsoMargin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
-                                                                            </StackPanel>
-                                                                        </Border>
-                                                                        <Border Width="90" Grid.Column="1" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
-                                                                            <StackPanel Orientation="Vertical">
-                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
-                                                                                    <TextBlock Text="Margin Type" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="Outer expands the structure by the margin value, Inner shrinks the structure."/>
-                                                                                </Border>
-                                                                                <ComboBox SelectedItem="{Binding SelectedMargin, UpdateSourceTrigger=PropertyChanged}" ItemsSource="{Binding MarginTypeOptions}" Style="{StaticResource OptiStructureComboBoxStyle2}" Template="{StaticResource OptiComboBoxControlTemplate}" Grid.Row="1" Width="70" Margin="0,2,0,2" Grid.Column="6" HorizontalAlignment="Center" HorizontalContentAlignment="Center"
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                        </Grid>
+                                                                        <Grid Visibility="{Binding SelectedOperator, Converter={StaticResource CropVisibilityConverter}}">
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                            </Grid.ColumnDefinitions>
+                                                                            <Border Width="100" Grid.Column="0" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                                <StackPanel Orientation="Vertical">
+                                                                                    <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                        <TextBlock Text="Iso. Offset (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
+                                                                                    </Border>
+                                                                                    <TextBox Text="{Binding IsoCropOffset, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                            <Border Width="90" Grid.Column="1" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                                <StackPanel Orientation="Vertical">
+                                                                                    <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                        <TextBlock Text="Internal Crop" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
+                                                                                    </Border>
+                                                                                    <CheckBox IsChecked="{Binding InternalCrop, Mode=TwoWay}" Style="{StaticResource CheckBoxStyle1}" HorizontalAlignment="Center" Margin="5,5,0,0" Width="25" VerticalAlignment="Center" HorizontalContentAlignment="Center" />
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                        </Grid>
+                                                                        <Grid Visibility="{Binding SelectedOperator, Converter={StaticResource ConvertDoseVisibilityConverter}}">
+                                                                            <Border Width="100" Grid.Column="0" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Left" CornerRadius="5,5,5,5">
+                                                                                <StackPanel Orientation="Vertical">
+                                                                                    <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                        <TextBlock Text="Isodose (cGy)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="The isodose level to convert to structure."/>
+                                                                                    </Border>
+                                                                                    <TextBox Text="{Binding DoseLevel, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                        </Grid>
+                                                                        <Grid Visibility="{Binding SelectedOperator, Converter={StaticResource MarginVisibilityConverter}}">
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                            </Grid.ColumnDefinitions>
+                                                                            <Border Width="100" Grid.Column="0" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                                <StackPanel Orientation="Vertical">
+                                                                                    <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                        <TextBlock Text="Margin (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="Value for the margin in mm."/>
+                                                                                    </Border>
+                                                                                    <TextBox Text="{Binding IsoMargin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                            <Border Width="90" Grid.Column="1" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                                <StackPanel Orientation="Vertical">
+                                                                                    <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                        <TextBlock Text="Margin Type" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="Outer expands the structure by the margin value, Inner shrinks the structure."/>
+                                                                                    </Border>
+                                                                                    <ComboBox SelectedItem="{Binding SelectedMargin, UpdateSourceTrigger=PropertyChanged}" ItemsSource="{Binding MarginTypeOptions}" Style="{StaticResource OptiStructureComboBoxStyle2}" Template="{StaticResource OptiComboBoxControlTemplate}" Grid.Row="1" Width="70" Margin="0,2,0,2" Grid.Column="6" HorizontalAlignment="Center" HorizontalContentAlignment="Center"
 />
-                                                                            </StackPanel>
-                                                                        </Border>
-                                                                    </Grid>
-                                                                    <Grid Grid.Column="2" Visibility="{Binding SelectedOperator, Converter={StaticResource AsymmetricCropVisibilityConverter}}">
-                                                                        <Grid.ColumnDefinitions>
-                                                                            <ColumnDefinition Width="Auto"/>
-                                                                            <ColumnDefinition Width="Auto"/>
-                                                                            <ColumnDefinition Width="Auto"/>
-                                                                            <ColumnDefinition Width="Auto"/>
-                                                                            <ColumnDefinition Width="Auto"/>
-                                                                            <ColumnDefinition Width="Auto"/>
-                                                                            <ColumnDefinition Width="Auto"/>
-                                                                        </Grid.ColumnDefinitions>
-                                                                        <Border  Width="70" Grid.Column="0" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
-                                                                            <StackPanel Orientation="Vertical">
-                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
-                                                                                    <TextBlock Text="Right (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is the additional offset from this side of the cropped structure."/>
-                                                                                </Border>
-                                                                                <TextBox Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center"  
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                        </Grid>
+                                                                        <Grid Visibility="{Binding SelectedOperator, Converter={StaticResource AsymmetricCropVisibilityConverter}}">
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                            </Grid.ColumnDefinitions>
+                                                                            <Border  Width="70" Grid.Column="0" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                                <StackPanel Orientation="Vertical">
+                                                                                    <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                        <TextBlock Text="Right (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is the additional offset from this side of the cropped structure."/>
+                                                                                    </Border>
+                                                                                    <TextBox Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center"  
                                                                                Text="{Binding RightCropOffset, UpdateSourceTrigger=PropertyChanged}" />
-                                                                            </StackPanel>
-                                                                        </Border>
-                                                                        <Border  Width="70" Grid.Column="1" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
-                                                                            <StackPanel Orientation="Vertical">
-                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
-                                                                                    <TextBlock Text="Left (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is the additional offset from this side of the cropped structure."/>
-                                                                                </Border>
-                                                                                <TextBox Text="{Binding LeftCropOffset, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center"/>
-                                                                            </StackPanel>
-                                                                        </Border>
-                                                                        <Border Width="70" Grid.Column="2" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
-                                                                            <StackPanel Orientation="Vertical">
-                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
-                                                                                    <TextBlock Text="Ant (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is the additional offset from this side of the cropped structure."/>
-                                                                                </Border>
-                                                                                <TextBox Text="{Binding AntCropOffset, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center" />
-                                                                            </StackPanel>
-                                                                        </Border>
-                                                                        <Border  Width="70" Grid.Column="3" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
-                                                                            <StackPanel Orientation="Vertical">
-                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
-                                                                                    <TextBlock Text="Post (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is the additional offset from this side of the cropped structure."/>
-                                                                                </Border>
-                                                                                <TextBox Text="{Binding PostCropOffset, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center"/>
-                                                                            </StackPanel>
-                                                                        </Border>
-                                                                        <Border Width="70" Grid.Column="4" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
-                                                                            <StackPanel Orientation="Vertical">
-                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
-                                                                                    <TextBlock Text="Sup (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is the additional offset from this side of the cropped structure."/>
-                                                                                </Border>
-                                                                                <TextBox Text="{Binding SupCropOffset, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center" />
-                                                                            </StackPanel>
-                                                                        </Border>
-                                                                        <Border  Width="70" Grid.Column="5" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
-                                                                            <StackPanel Orientation="Vertical">
-                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
-                                                                                    <TextBlock Text="Inf (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is the additional offset from this side of the cropped structure."/>
-                                                                                </Border>
-                                                                                <TextBox Text="{Binding InfCropOffset, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center" />
-                                                                            </StackPanel>
-                                                                        </Border>
-                                                                        <Border Width="90" Grid.Column="6" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
-                                                                            <StackPanel Orientation="Vertical">
-                                                                                <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
-                                                                                    <TextBlock Text="Internal Crop" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
-                                                                                </Border>
-                                                                                <CheckBox IsChecked="{Binding InternalCrop, Mode=TwoWay}" Style="{StaticResource CheckBoxStyle1}" HorizontalAlignment="Center" Margin="5,5,0,0" Width="25" VerticalAlignment="Center" HorizontalContentAlignment="Center" />
-                                                                            </StackPanel>
-                                                                        </Border>
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                            <Border  Width="70" Grid.Column="1" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                                <StackPanel Orientation="Vertical">
+                                                                                    <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                        <TextBlock Text="Left (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is the additional offset from this side of the cropped structure."/>
+                                                                                    </Border>
+                                                                                    <TextBox Text="{Binding LeftCropOffset, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center"/>
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                            <Border Width="70" Grid.Column="2" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                                <StackPanel Orientation="Vertical">
+                                                                                    <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                        <TextBlock Text="Ant (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is the additional offset from this side of the cropped structure."/>
+                                                                                    </Border>
+                                                                                    <TextBox Text="{Binding AntCropOffset, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center" />
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                            <Border  Width="70" Grid.Column="3" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                                <StackPanel Orientation="Vertical">
+                                                                                    <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                        <TextBlock Text="Post (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is the additional offset from this side of the cropped structure."/>
+                                                                                    </Border>
+                                                                                    <TextBox Text="{Binding PostCropOffset, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center"/>
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                            <Border Width="70" Grid.Column="4" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                                <StackPanel Orientation="Vertical">
+                                                                                    <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                        <TextBlock Text="Sup (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is the additional offset from this side of the cropped structure."/>
+                                                                                    </Border>
+                                                                                    <TextBox Text="{Binding SupCropOffset, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center" />
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                            <Border  Width="70" Grid.Column="5" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                                <StackPanel Orientation="Vertical">
+                                                                                    <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                        <TextBlock Text="Inf (mm)" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is the additional offset from this side of the cropped structure."/>
+                                                                                    </Border>
+                                                                                    <TextBox Text="{Binding InfCropOffset, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle2}"  Width="50" Margin="0,3,0,2" HorizontalAlignment="Center" HorizontalContentAlignment="Center" />
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                            <Border Width="90" Grid.Column="6" Margin="5,1,5,1" BorderBrush="LightSteelBlue" Background="LightGoldenrodYellow" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="5,5,5,5">
+                                                                                <StackPanel Orientation="Vertical">
+                                                                                    <Border Background="LightSteelBlue" HorizontalAlignment="Stretch" CornerRadius="5,5,0,0">
+                                                                                        <TextBlock Text="Internal Crop" Margin="0,2,0,2" HorizontalAlignment="Center" ToolTip="This is used as the default for all directions which are not explicitly defined by the user. &#x0a;If this is negative, an internal margin is applied. Internal margins must be uniform."/>
+                                                                                    </Border>
+                                                                                    <CheckBox IsChecked="{Binding InternalCrop, Mode=TwoWay}" Style="{StaticResource CheckBoxStyle1}" HorizontalAlignment="Center" Margin="5,5,0,0" Width="25" VerticalAlignment="Center" HorizontalContentAlignment="Center" />
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                        </Grid>
                                                                     </Grid>
                                                                 </Grid>
                                                             </DataTemplate>

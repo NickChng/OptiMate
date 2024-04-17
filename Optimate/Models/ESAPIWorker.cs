@@ -14,6 +14,7 @@ namespace OptiMate
     public class EsapiWorker 
     {
         private readonly StructureSet _ss = null;
+        private readonly PlanSetup _pl = null;
         private readonly Patient _p = null;
         private readonly Dispatcher _dispatcher = null;
         public string UserId { get; private set; }
@@ -25,12 +26,27 @@ namespace OptiMate
             _ss = ss;
             _dispatcher = Dispatcher.CurrentDispatcher;
         }
-    
+
+        public EsapiWorker(Patient p, PlanSetup pl, StructureSet ss, string userId)
+        {
+            _p = p;
+            _pl = pl;
+            UserId = userId;
+            _ss = ss;
+            _dispatcher = Dispatcher.CurrentDispatcher;
+        }
+
         public delegate void D(Patient p, StructureSet s);
         public async Task<bool> AsyncRunStructureContext(Action<Patient, StructureSet, Dispatcher> a)
         {
             await _dispatcher.BeginInvoke(a, _p, _ss, _dispatcher);
             return true;
         }
-   }
+
+        public async Task<bool> AsyncRunPlanContext(Action<Patient, PlanSetup, StructureSet, Dispatcher> a)
+        {
+            await _dispatcher.BeginInvoke(a, _p, _pl, _ss, _dispatcher);
+            return true;
+        }
+    }
 }

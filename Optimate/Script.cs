@@ -39,7 +39,13 @@ namespace VMS.TPS
         public void Execute(ScriptContext context)
         {
             // The ESAPI worker needs to be created in the main thread
-            var esapiWorker = new EsapiWorker(context.Patient, context.StructureSet, context.CurrentUser.Id);
+            EsapiWorker ew;
+            if (context.PlanSetup == null)
+            {
+                ew = new EsapiWorker(context.Patient, context.StructureSet, context.CurrentUser.Id);
+            }
+            else
+                ew = new EsapiWorker(context.Patient, context.PlanSetup, context.StructureSet, context.CurrentUser.Id);
 
             // This new queue of tasks will prevent the script
             // for exiting until the new window is closed
@@ -49,7 +55,7 @@ namespace VMS.TPS
             {
                 // This method won't return until the window is closed
 
-                InitializeAndStartMainWindow(esapiWorker);
+                InitializeAndStartMainWindow(ew);
 
                 // End the queue so that the script can exit
                 frame.Continue = false;

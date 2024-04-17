@@ -64,6 +64,8 @@ namespace OptiMate.Models
     public class TemplateSavedEvent : PubSubEvent { }
     public class TemplateStructureIdChangedEvent : PubSubEvent<TemplateStructureIdChangedEventInfo> { }
     public class GeneratedStructureIdChangedEvent : PubSubEvent<GeneratedStructureIdChangedEventInfo> { }
+
+    public class GeneratedStructureCleaningUpEvent : PubSubEvent<string> { }
     public class GeneratedStructureOrderChangedEvent : PubSubEvent { }
     public class RemovedInstructionEvent : PubSubEvent<InstructionRemovedEventInfo> { }
     public class ModelInitializedEvent : PubSubEvent { }

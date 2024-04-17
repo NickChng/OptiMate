@@ -13,6 +13,7 @@ using System.Reflection;
 using Prism.Events;
 using OptiMate.ViewModels;
 using OptiMate.Logging;
+using System.Windows;
 
 namespace OptiMate.ViewModels
 {
@@ -54,10 +55,17 @@ namespace OptiMate.ViewModels
         {
             _generatedStructure = new GeneratedStructure() { StructureId = "DesignNameMaxLth" };
             InstructionViewModels = new ObservableCollection<InstructionViewModel>();
+            EditMode = true;
+            InstructionViewModels.Add(new InstructionViewModel());
+            InstructionViewModels.Add(new InstructionViewModel());
+            InstructionViewModels.Add(new InstructionViewModel());
+            InstructionViewModels.Add(new InstructionViewModel());
+            InstructionViewModels.Add(new InstructionViewModel());
             InstructionViewModels.Add(new InstructionViewModel());
 
         }
         public bool EditMode { get; private set; } = false;
+        public bool isModified { get; private set; } = false;
 
         public string StructureId
         {
@@ -70,7 +78,25 @@ namespace OptiMate.ViewModels
                 if (value != _generatedStructure.StructureId)
                 {
                     _model.RenameGeneratedStructure(_generatedStructure.StructureId, value);
-                    RaisePropertyChangedEvent(nameof(StructureId));
+                    isModified = true;
+                    RaisePropertyChangedEvent(nameof(WarningVisibility_GenStructureChanged));
+                }
+            }
+        }
+
+        public bool isTemporary 
+        {
+            get
+            {
+                return _generatedStructure.IsTemporary;
+            }
+            set
+            {
+                if (value != _generatedStructure.IsTemporary)
+                {
+                    _generatedStructure.IsTemporary = value;
+                    isModified = true;
+                    RaisePropertyChangedEvent(nameof(WarningVisibility_GenStructureChanged));
                 }
             }
         }
@@ -168,23 +194,48 @@ namespace OptiMate.ViewModels
 
         private void ToggleEditMode(object obj = null)
         {
-            EditMode ^= true;
+            if (!HasErrors)
+                EditMode ^= true;
         }
+
+        public Visibility WarningVisibility_GenStructureChanged
+        {
+            get
+            {
+                return (hasWarnings || isModified) ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        private bool hasWarnings = false;
 
         internal bool ValidateInputs(List<string> aggregateWarnings)
         {
             bool isValid = true;
+            hasWarnings = false;
+            ClearErrors();
             if (HasErrors)
             {
                 aggregateWarnings.AddRange(GetAllErrors());
                 isValid = false;
+                hasWarnings = true;
             }
             foreach (var ivm in InstructionViewModels)
+            {
                 if (ivm.HasErrors)
                 {
                     aggregateWarnings.AddRange(ivm.GetAllErrors());
                     isValid = false;
+                    hasWarnings = true;
+                    AddError(nameof(InstructionViewModels), "One or more instructions have warnings or errors");
                 }
+                if (ivm.isModified)
+                {
+                    hasWarnings = true;
+                }
+            }
+            if (!isValid)
+                EditMode = true;
+            RaisePropertyChangedEvent(nameof(WarningVisibility_GenStructureChanged));
             return isValid;
         }
     }

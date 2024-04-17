@@ -56,6 +56,7 @@
               <xs:sequence>
                 <xs:choice minOccurs="1" maxOccurs="unbounded">
                   <xs:element name="ConvertResolution" type="OptiMate:ConvertResolution"/>
+                  <xs:element name="ConvertDose" type="OptiMate:ConvertDose"/>
                   <xs:element name="Margin" type="OptiMate:Margin"/>
                   <xs:element name="AsymmetricMargin" type="OptiMate:AsymmetricMargin"/>
                   <xs:element name="Or" type="OptiMate:Or"/>
@@ -70,6 +71,7 @@
           </xs:element>
         </xs:sequence>
         <xs:attribute name="StructureId" type="xs:string" use="required"/>
+        <xs:attribute name="IsTemporary" type="xs:boolean" use="optional" default="false"/>
         <xs:attribute name="DicomType" type="xs:string" default="CONTROL"/>
         <xs:attribute name="StructureColor" type="OptiMate:colorString" />
       </xs:extension>
